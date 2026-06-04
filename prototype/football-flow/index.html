@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>足球命格产品动线原型</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #07110c;
+        --ink: #06131f;
+        --navy: #071827;
+        --green: #08742b;
+        --green-deep: #06491f;
+        --grass: #0b6128;
+        --card: #f7faf3;
+        --paper: #fffef7;
+        --line: rgba(8, 18, 31, 0.16);
+        --muted: #6a756c;
+        --gold: #f2c331;
+        --yellow: #ffd83d;
+        --red: #d83a2e;
+        --shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at 50% -10%, rgba(37, 138, 65, 0.34), transparent 34rem),
+          linear-gradient(120deg, #06100a, #0b1a10 42%, #040807);
+        color: #fff;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      .page {
+        min-height: 100vh;
+        padding: 28px 28px 40px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+        gap: 24px;
+        align-items: end;
+        max-width: 1480px;
+        margin: 0 auto 28px;
+      }
+
+      .hero h1 {
+        max-width: 760px;
+        margin: 0;
+        font-size: clamp(38px, 5vw, 72px);
+        line-height: 0.98;
+        letter-spacing: 0;
+      }
+
+      .hero p {
+        max-width: 620px;
+        margin: 16px 0 0;
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 17px;
+        line-height: 1.65;
+      }
+
+      .hero-panel {
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: var(--shadow);
+        padding: 16px;
+      }
+
+      .hero-panel p {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .hero-panel strong {
+        display: block;
+        color: #fff;
+        font-size: 18px;
+        line-height: 1.25;
+        margin-bottom: 8px;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(286px, 1fr));
+        gap: 18px;
+        max-width: 1480px;
+        margin: 0 auto;
+      }
+
+      .stage {
+        display: grid;
+        gap: 10px;
+      }
+
+      .stage-label {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        color: rgba(255, 255, 255, 0.74);
+        font-size: 15px;
+        font-weight: 850;
+      }
+
+      .stage-label span {
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--yellow);
+      }
+
+      .phone {
+        position: relative;
+        min-height: 830px;
+        border: 10px solid #161b1c;
+        border-radius: 34px;
+        background: #000;
+        overflow: hidden;
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.46);
+      }
+
+      .phone::before {
+        content: "";
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        z-index: 20;
+        width: 104px;
+        height: 24px;
+        transform: translateX(-50%);
+        border-radius: 999px;
+        background: #050505;
+      }
+
+      .status {
+        position: absolute;
+        top: 12px;
+        left: 18px;
+        right: 18px;
+        z-index: 21;
+        display: flex;
+        justify-content: space-between;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .screen {
+        position: absolute;
+        inset: 0;
+        padding: 48px 18px 22px;
+      }
+
+      .pitch-bg {
+        background:
+          linear-gradient(90deg, transparent 49%, rgba(255, 255, 255, 0.14) 50%, transparent 51%),
+          radial-gradient(circle at 50% 44%, transparent 0 68px, rgba(255, 255, 255, 0.13) 70px 72px, transparent 74px),
+          repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.055) 0 22px, transparent 22px 44px),
+          linear-gradient(155deg, #07551f, #0b7c2c 48%, #043516);
+      }
+
+      .dark-bg {
+        background:
+          radial-gradient(circle at 50% 16%, rgba(255, 255, 255, 0.18), transparent 26rem),
+          linear-gradient(180deg, rgba(4, 13, 24, 0.72), rgba(4, 13, 24, 1)),
+          #04101d;
+      }
+
+      .screen h2 {
+        margin: 0;
+        font-size: 46px;
+        line-height: 1.03;
+        letter-spacing: 0;
+      }
+
+      .screen p {
+        margin: 0;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.96);
+        color: var(--ink);
+        box-shadow: 0 20px 42px rgba(0, 0, 0, 0.22);
+      }
+
+      .input-panel {
+        display: grid;
+        gap: 12px;
+        margin-top: 22px;
+        padding: 14px;
+      }
+
+      .field {
+        display: grid;
+        gap: 7px;
+      }
+
+      .field span {
+        color: var(--navy);
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .row-2,
+      .row-3 {
+        display: grid;
+        gap: 8px;
+      }
+
+      .row-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .row-3 {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+
+      .control {
+        min-height: 42px;
+        border: 1px solid rgba(8, 18, 31, 0.16);
+        border-radius: 6px;
+        background: #fff;
+        color: var(--ink);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 11px;
+        font-size: 15px;
+        font-weight: 760;
+      }
+
+      .selected {
+        border-color: rgba(8, 116, 43, 0.5);
+        background: rgba(8, 116, 43, 0.08);
+      }
+
+      .avatar-line {
+        display: grid;
+        grid-template-columns: 48px minmax(0, 1fr) 28px;
+        gap: 10px;
+        align-items: center;
+        padding: 9px;
+        border: 1px solid rgba(8, 116, 43, 0.38);
+        border-radius: 6px;
+        background: rgba(8, 116, 43, 0.07);
+      }
+
+      .avatar-line strong {
+        display: block;
+        color: var(--ink);
+        font-size: 14px;
+      }
+
+      .avatar-line small {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        margin-top: 2px;
+      }
+
+      .cta {
+        min-height: 50px;
+        border: 0;
+        border-radius: 6px;
+        background: linear-gradient(135deg, #09822f, #05591f);
+        color: #fff;
+        font-size: 17px;
+        font-weight: 920;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 12px 28px rgba(4, 88, 32, 0.26);
+      }
+
+      .fineprint {
+        color: rgba(8, 18, 31, 0.48);
+        font-size: 10px;
+        text-align: center;
+      }
+
+      .pixel {
+        image-rendering: pixelated;
+        position: relative;
+        width: 38px;
+        height: 44px;
+        margin: 0 auto;
+      }
+
+      .pixel i {
+        position: absolute;
+        display: block;
+        width: 6px;
+        height: 6px;
+        background: #111;
+      }
+
+      .p-head { left: 14px; top: 0; width: 14px !important; height: 14px !important; background: #f2bd72 !important; }
+      .p-hair { left: 10px; top: 0; width: 22px !important; height: 8px !important; background: #17201d !important; }
+      .p-body { left: 10px; top: 16px; width: 22px !important; height: 17px !important; background: #0a7830 !important; }
+      .p-arm-l { left: 4px; top: 18px; height: 16px !important; background: #f2bd72 !important; }
+      .p-arm-r { right: 4px; top: 18px; height: 16px !important; background: #f2bd72 !important; }
+      .p-leg-l { left: 10px; top: 34px; height: 10px !important; background: #111 !important; }
+      .p-leg-r { left: 24px; top: 34px; height: 10px !important; background: #111 !important; }
+
+      .loading-title {
+        margin-top: 76px;
+        text-align: center;
+        font-size: 40px;
+        line-height: 1.14;
+      }
+
+      .loading-title mark {
+        background: transparent;
+        color: var(--yellow);
+      }
+
+      .tactic-board {
+        position: relative;
+        width: 226px;
+        height: 250px;
+        margin: 34px auto 18px;
+        border: 8px solid #8a6432;
+        border-radius: 8px;
+        background:
+          linear-gradient(90deg, transparent 49%, #a9aca6 50%, transparent 51%),
+          radial-gradient(circle at 50% 50%, transparent 0 42px, #a9aca6 43px 45px, transparent 46px),
+          #f3f0e8;
+        transform: rotate(-2deg);
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.3);
+      }
+
+      .magnifier {
+        position: absolute;
+        right: -26px;
+        bottom: 52px;
+        display: grid;
+        place-items: center;
+        width: 102px;
+        height: 102px;
+        border: 9px solid rgba(255, 255, 255, 0.74);
+        border-radius: 50%;
+        background: rgba(18, 32, 42, 0.2);
+      }
+
+      .magnifier::after {
+        content: "";
+        position: absolute;
+        right: -45px;
+        bottom: -30px;
+        width: 70px;
+        height: 11px;
+        border-radius: 999px;
+        background: #d9d9d9;
+        transform: rotate(42deg);
+      }
+
+      .progress {
+        width: 245px;
+        height: 14px;
+        margin: 20px auto 22px;
+        border: 1px solid rgba(255, 255, 255, 0.72);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+
+      .progress div {
+        width: 68%;
+        height: 100%;
+        background: #0dad43;
+      }
+
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        color: rgba(255, 255, 255, 0.66);
+        font-size: 12px;
+        text-align: center;
+      }
+
+      .step-icon {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        margin: 0 auto 8px;
+        border: 1px solid rgba(255, 255, 255, 0.32);
+        border-radius: 8px;
+        color: #fff;
+      }
+
+      .split-screen {
+        display: grid;
+        grid-template-columns: 0.43fr 0.57fr;
+        padding: 0;
+      }
+
+      .split-left,
+      .split-right {
+        position: relative;
+        padding: 54px 14px 18px;
+      }
+
+      .split-left {
+        background: #eef5e8;
+        color: var(--ink);
+      }
+
+      .split-right {
+        background:
+          radial-gradient(circle at 64% 38%, rgba(255, 216, 61, 0.22), transparent 9rem),
+          linear-gradient(180deg, #0c0d0d, #060606);
+      }
+
+      .ribbon {
+        display: inline-flex;
+        min-height: 34px;
+        align-items: center;
+        padding: 0 11px;
+        border-radius: 5px;
+        background: var(--green);
+        color: #fff;
+        font-size: 14px;
+        font-weight: 950;
+      }
+
+      .ribbon.gold {
+        background: var(--gold);
+        color: #14120a;
+      }
+
+      .split-left h3,
+      .split-right h3 {
+        margin: 20px 0 4px;
+        font-size: 22px;
+        line-height: 1.06;
+      }
+
+      .split-right h3 {
+        color: var(--yellow);
+        font-size: 34px;
+      }
+
+      .split-left p,
+      .split-right p {
+        color: inherit;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .silhouette {
+        width: 112px;
+        height: 218px;
+        margin: 34px auto 12px;
+        border-radius: 44% 44% 0 0;
+        background:
+          radial-gradient(circle at 50% 10%, #10361f 0 18px, transparent 19px),
+          linear-gradient(90deg, transparent 0 20px, #0b4b24 21px 89px, transparent 90px),
+          linear-gradient(115deg, transparent 0 32px, #0b4b24 33px 42px, transparent 43px),
+          linear-gradient(70deg, transparent 0 76px, #0b4b24 77px 86px, transparent 87px);
+        opacity: 0.88;
+      }
+
+      .kick-scene {
+        position: relative;
+        height: 250px;
+        margin-top: 24px;
+      }
+
+      .kicker {
+        position: absolute;
+        left: 18px;
+        top: 42px;
+        width: 158px;
+        height: 158px;
+      }
+
+      .kick-body {
+        position: absolute;
+        left: 50px;
+        top: 44px;
+        width: 70px;
+        height: 62px;
+        border-radius: 42px 34px 24px 28px;
+        background: #111;
+        transform: rotate(-22deg);
+      }
+
+      .kick-head {
+        position: absolute;
+        left: 96px;
+        top: 20px;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #d5a46e;
+      }
+
+      .kick-leg {
+        position: absolute;
+        left: 94px;
+        top: 86px;
+        width: 92px;
+        height: 18px;
+        border-radius: 999px;
+        background: #111;
+        transform: rotate(-8deg);
+        transform-origin: left center;
+      }
+
+      .kick-leg::after {
+        content: "";
+        position: absolute;
+        right: -22px;
+        top: -4px;
+        width: 30px;
+        height: 26px;
+        border-radius: 6px;
+        background: #1c1c1c;
+      }
+
+      .kick-leg.back {
+        left: 44px;
+        top: 102px;
+        width: 72px;
+        transform: rotate(48deg);
+      }
+
+      .impact {
+        position: absolute;
+        right: 6px;
+        top: 60px;
+        width: 86px;
+        height: 86px;
+        background:
+          conic-gradient(from 10deg, transparent 0 12deg, var(--yellow) 13deg 22deg, transparent 23deg 44deg, var(--yellow) 45deg 60deg, transparent 61deg 110deg, var(--yellow) 111deg 132deg, transparent 133deg);
+        filter: drop-shadow(0 0 12px rgba(255, 216, 61, 0.55));
+      }
+
+      .result-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 20px;
+      }
+
+      .tag {
+        padding: 7px 10px;
+        border-radius: 5px;
+        background: var(--gold);
+        color: #15120a;
+        font-size: 13px;
+        font-weight: 950;
+      }
+
+      .quote {
+        margin-top: 14px !important;
+        border: 1px solid rgba(242, 195, 49, 0.42);
+        border-radius: 6px;
+        padding: 11px;
+        color: rgba(255, 255, 255, 0.86) !important;
+        font-size: 14px !important;
+        line-height: 1.45;
+        font-weight: 760 !important;
+      }
+
+      .result-actions {
+        position: absolute;
+        left: 14px;
+        right: 14px;
+        bottom: 18px;
+        display: grid;
+        gap: 9px;
+      }
+
+      .ghost {
+        min-height: 45px;
+        border: 1px solid rgba(255, 255, 255, 0.42);
+        border-radius: 6px;
+        background: transparent;
+        color: #fff;
+        font-size: 16px;
+        font-weight: 850;
+      }
+
+      .share-bg {
+        background:
+          radial-gradient(circle at 40% 6%, rgba(255, 255, 255, 0.22), transparent 16rem),
+          linear-gradient(180deg, #121411, #050505);
+      }
+
+      .share-card {
+        margin-top: 22px;
+        border: 2px solid rgba(255, 255, 255, 0.72);
+        border-radius: 8px;
+        padding: 18px;
+        background:
+          radial-gradient(circle at 74% 30%, rgba(255, 216, 61, 0.26), transparent 8rem),
+          linear-gradient(140deg, #191b18, #080909);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.36);
+      }
+
+      .share-card h3 {
+        margin: 0;
+        color: var(--yellow);
+        font-size: 44px;
+        line-height: 1.04;
+      }
+
+      .share-card .sub {
+        margin-top: 6px;
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 16px;
+        font-weight: 800;
+      }
+
+      .meter {
+        display: grid;
+        gap: 9px;
+        margin: 18px 0;
+      }
+
+      .meter-row {
+        display: grid;
+        grid-template-columns: 72px minmax(0, 1fr) 36px;
+        gap: 8px;
+        align-items: center;
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 12px;
+        font-weight: 850;
+      }
+
+      .bar {
+        height: 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.18);
+        overflow: hidden;
+      }
+
+      .bar div {
+        height: 100%;
+        background: var(--gold);
+      }
+
+      .share-line {
+        margin: 18px 0 !important;
+        color: rgba(255, 255, 255, 0.86);
+        font-size: 17px !important;
+        line-height: 1.55;
+        font-weight: 800;
+        text-align: center;
+      }
+
+      .qr-box {
+        display: grid;
+        grid-template-columns: 54px minmax(0, 1fr) 72px;
+        gap: 10px;
+        align-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 8px;
+        background: rgba(8, 116, 43, 0.72);
+        padding: 10px;
+      }
+
+      .qr-text strong {
+        display: block;
+        color: #fff;
+        font-size: 13px;
+      }
+
+      .qr-text span {
+        display: block;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 10px;
+        margin-top: 3px;
+      }
+
+      .qr {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 3px;
+        width: 70px;
+        height: 70px;
+        padding: 6px;
+        background: #fff;
+      }
+
+      .qr b {
+        background: #111;
+      }
+
+      .story-note {
+        max-width: 1480px;
+        margin: 22px auto 0;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.06);
+        padding: 18px;
+      }
+
+      .story-note h2 {
+        margin: 0 0 10px;
+        font-size: 18px;
+      }
+
+      .story-note ol {
+        margin: 0;
+        padding-left: 22px;
+        color: rgba(255, 255, 255, 0.74);
+        line-height: 1.7;
+      }
+
+      .reference {
+        max-width: 1480px;
+        margin: 22px auto 0;
+      }
+
+      .reference img {
+        display: block;
+        width: 100%;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 8px;
+      }
+
+      @media (max-width: 1220px) {
+        .flow {
+          grid-template-columns: repeat(2, minmax(286px, 1fr));
+        }
+      }
+
+      @media (max-width: 760px) {
+        .page {
+          padding: 20px 14px 28px;
+        }
+
+        .hero {
+          grid-template-columns: 1fr;
+        }
+
+        .flow {
+          grid-template-columns: 1fr;
+        }
+
+        .phone {
+          min-height: 800px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <div>
+          <h1>你以为你是翩翩公子，系统说你是球场恶汉。</h1>
+          <p>用一个完整样例串联《足球命格》的核心动线：出生信息输入、系统拆穿人设、结果反差揭晓、分享卡回流。调性是精致、细致、高级、搞笑。</p>
+        </div>
+        <aside class="hero-panel">
+          <strong>样例设定</strong>
+          <p>用户自认「翩翩公子 · 中场指挥官」，类似优雅前腰/中场大师；系统命理判定为「球场恶汉 · 一脚踹上肚子的后腰（德容式高危动作梗）」，用匿名卡通高危动作表达，不使用真实球员肖像。</p>
+        </aside>
+      </section>
+
+      <section class="flow" aria-label="足球命格四屏原型">
+        <article class="stage">
+          <div class="stage-label"><span>1</span>输入信息</div>
+          <div class="phone">
+            <div class="status"><b>9:41</b><b>5G 100%</b></div>
+            <section class="screen pitch-bg">
+              <h2>你生来<br />踢什么位置？</h2>
+              <div class="input-panel panel">
+                <div class="field">
+                  <span>性别</span>
+                  <div class="row-2">
+                    <div class="control selected">男 <b>✓</b></div>
+                    <div class="control">女</div>
+                  </div>
+                </div>
+                <div class="field">
+                  <span>出生日期</span>
+                  <div class="row-3">
+                    <div class="control">1995年</div>
+                    <div class="control">6月</div>
+                    <div class="control">15日</div>
+                  </div>
+                </div>
+                <div class="field">
+                  <span>出生时间</span>
+                  <div class="row-2">
+                    <div class="control">14时</div>
+                    <div class="control">30分</div>
+                  </div>
+                </div>
+                <div class="field">
+                  <span>出生地</span>
+                  <div class="row-2">
+                    <div class="control">中国</div>
+                    <div class="control">广州</div>
+                  </div>
+                </div>
+                <div class="field">
+                  <span>你以为自己像谁？</span>
+                  <div class="avatar-line">
+                    <div class="pixel" aria-hidden="true">
+                      <i class="p-hair"></i><i class="p-head"></i><i class="p-body"></i><i class="p-arm-l"></i><i class="p-arm-r"></i><i class="p-leg-l"></i><i class="p-leg-r"></i>
+                    </div>
+                    <div>
+                      <strong>翩翩公子 · 中场指挥官</strong>
+                      <small>优雅从容，掌控全局</small>
+                    </div>
+                    <b>✓</b>
+                  </div>
+                </div>
+                <button class="cta">开始算命格</button>
+                <p class="fineprint">数据仅供娱乐，切勿当真哦～</p>
+              </div>
+            </section>
+          </div>
+        </article>
+
+        <article class="stage">
+          <div class="stage-label"><span>2</span>拆穿人设中</div>
+          <div class="phone">
+            <div class="status"><b>9:41</b><b>5G 100%</b></div>
+            <section class="screen dark-bg">
+              <h2 class="loading-title">正在<mark>拆穿</mark>你的<br />球场人设</h2>
+              <p style="text-align:center;color:rgba(255,255,255,.68);margin-top:12px;">命格解析中，请稍候...</p>
+              <div class="tactic-board">
+                <div class="magnifier">
+                  <div class="pixel" aria-hidden="true">
+                    <i class="p-hair"></i><i class="p-head"></i><i class="p-body"></i><i class="p-arm-l"></i><i class="p-arm-r"></i><i class="p-leg-l"></i><i class="p-leg-r"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="progress"><div></div></div>
+              <div class="steps">
+                <div><div class="step-icon">盘</div><strong>排盘中</strong></div>
+                <div><div class="step-icon">跑</div><strong>看跑位</strong></div>
+                <div><div class="step-icon">牌</div><strong>查犯规基因</strong></div>
+              </div>
+              <p style="color:var(--yellow);font-size:12px;text-align:center;margin-top:32px;">小提示：有些人设，天生就不是用来优雅的。</p>
+            </section>
+          </div>
+        </article>
+
+        <article class="stage">
+          <div class="stage-label"><span>3</span>结果揭晓</div>
+          <div class="phone">
+            <div class="status"><b>9:41</b><b>5G 100%</b></div>
+            <section class="screen split-screen">
+              <div class="split-left">
+                <span class="ribbon">你以为</span>
+                <h3>翩翩公子</h3>
+                <p>中场指挥官</p>
+                <div class="silhouette"></div>
+                <div class="result-tags">
+                  <span class="tag" style="background:#e9f2e4;color:#183520;">优雅</span>
+                  <span class="tag" style="background:#e9f2e4;color:#183520;">传球大师</span>
+                  <span class="tag" style="background:#e9f2e4;color:#183520;">掌控节奏</span>
+                </div>
+              </div>
+              <div class="split-right">
+                <span class="ribbon gold">实际你是</span>
+                <h3>球场恶汉</h3>
+                <p>一脚踹上肚子的后腰</p>
+                <div class="kick-scene" aria-hidden="true">
+                  <div class="kicker">
+                    <div class="kick-head"></div>
+                    <div class="kick-body"></div>
+                    <div class="kick-leg"></div>
+                    <div class="kick-leg back"></div>
+                    <div class="impact"></div>
+                  </div>
+                </div>
+                <div class="result-tags">
+                  <span class="tag">后腰</span>
+                  <span class="tag">拦截</span>
+                  <span class="tag">高危动作</span>
+                </div>
+                <p class="quote">你不是来跳舞的。你是来让对面冷静的。</p>
+                <div class="result-actions">
+                  <button class="cta">保存分享卡</button>
+                  <button class="ghost">再测一次</button>
+                </div>
+              </div>
+            </section>
+          </div>
+        </article>
+
+        <article class="stage">
+          <div class="stage-label"><span>4</span>分享卡片</div>
+          <div class="phone">
+            <div class="status"><b>9:41</b><b>5G 100%</b></div>
+            <section class="screen share-bg">
+              <h2 style="text-align:center;font-size:34px;margin-top:12px;">我的足球命格</h2>
+              <div class="share-card">
+                <p style="color:rgba(255,255,255,.78);font-weight:850;">球场角色</p>
+                <h3>球场恶汉</h3>
+                <p class="sub">一脚踹上肚子的后腰</p>
+                <div class="kick-scene" style="height:170px;margin-top:6px;">
+                  <div class="kicker" style="transform:scale(.76);left:70px;top:12px;">
+                    <div class="kick-head"></div>
+                    <div class="kick-body"></div>
+                    <div class="kick-leg"></div>
+                    <div class="kick-leg back"></div>
+                    <div class="impact"></div>
+                  </div>
+                </div>
+                <div class="meter">
+                  <div class="meter-row"><span>凶狠指数</span><div class="bar"><div style="width:95%"></div></div><b>95</b></div>
+                  <div class="meter-row"><span>拦截能力</span><div class="bar"><div style="width:92%"></div></div><b>92</b></div>
+                  <div class="meter-row"><span>战术破坏</span><div class="bar"><div style="width:98%"></div></div><b>98</b></div>
+                </div>
+              </div>
+              <p class="share-line">我以为我负责优雅，系统说我负责让对面冷静。</p>
+              <div class="qr-box">
+                <div class="pixel" aria-hidden="true">
+                  <i class="p-hair"></i><i class="p-head"></i><i class="p-body"></i><i class="p-arm-l"></i><i class="p-arm-r"></i><i class="p-leg-l"></i><i class="p-leg-r"></i>
+                </div>
+                <div class="qr-text">
+                  <strong>你也来测测</strong>
+                  <span>你是哪种球场角色</span>
+                </div>
+                <div class="qr" aria-hidden="true">
+                  <b></b><b></b><span></span><b></b><b></b>
+                  <b></b><span></span><b></b><span></span><b></b>
+                  <span></span><b></b><b></b><b></b><span></span>
+                  <b></b><span></span><b></b><span></span><b></b>
+                  <b></b><b></b><span></span><b></b><b></b>
+                </div>
+              </div>
+              <p class="fineprint" style="color:rgba(255,255,255,.42);margin-top:18px;">娱乐测试，仅供玩梗，不代表真实性格或命运判断。</p>
+            </section>
+          </div>
+        </article>
+      </section>
+
+      <section class="story-note">
+        <h2>动线说明</h2>
+        <ol>
+          <li>输入页用出生信息建立“命理计算感”，再用“你以为自己像谁”埋下反差。</li>
+          <li>揭晓页不直接给结果，先用“拆穿人设”制造等待和笑点。</li>
+          <li>结果页第一屏做强对比：优雅中场 vs 球场恶汉，用户一眼理解梗。</li>
+          <li>分享卡承担回流任务：结果身份、金句、二维码/短链、挑战语缺一不可。</li>
+        </ol>
+      </section>
+
+      <section class="reference">
+        <img src="../../assets/generated/football-flow-v1/flow-concept-reference.png" alt="足球命格视觉参考图" />
+      </section>
+    </main>
+  </body>
+</html>

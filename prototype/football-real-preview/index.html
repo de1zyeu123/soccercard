@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>足球命格真实素材预览</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="phone" aria-label="足球命格预览">
+        <div class="status-bar">
+          <span>20:26</span>
+          <span>5G</span>
+        </div>
+
+        <section class="screen screen-form active" data-screen="form">
+          <div class="field-top">
+            <p class="eyebrow">FOOTBALL BIRTHRIGHT</p>
+            <h1>测测你天生是哪种球场命格</h1>
+            <p class="subcopy">出生信息定主结果，自认球风只负责制造反差。</p>
+          </div>
+
+          <form id="birth-form" class="form-card">
+            <label>
+              <span>昵称</span>
+              <input id="nickname" name="nickname" maxlength="12" value="Zhen" />
+            </label>
+
+            <div class="grid-2">
+              <label>
+                <span>性别</span>
+                <select id="gender" name="gender">
+                  <option>男</option>
+                  <option>女</option>
+                  <option>不展示</option>
+                </select>
+              </label>
+              <label>
+                <span>出生地</span>
+                <input id="birthplace" name="birthplace" maxlength="12" value="上海" />
+              </label>
+            </div>
+
+            <div class="grid-2">
+              <label>
+                <span>出生日期</span>
+                <input id="birthdate" name="birthdate" type="date" value="1998-07-10" />
+              </label>
+              <label>
+                <span>出生时间</span>
+                <select id="birthtime" name="birthtime">
+                  <option value="unknown">不知道</option>
+                  <option value="0">00:00-01:59</option>
+                  <option value="2">02:00-03:59</option>
+                  <option value="4">04:00-05:59</option>
+                  <option value="6">06:00-07:59</option>
+                  <option value="8" selected>08:00-09:59</option>
+                  <option value="10">10:00-11:59</option>
+                  <option value="12">12:00-13:59</option>
+                  <option value="14">14:00-15:59</option>
+                  <option value="16">16:00-17:59</option>
+                  <option value="18">18:00-19:59</option>
+                  <option value="20">20:00-21:59</option>
+                  <option value="22">22:00-23:59</option>
+                </select>
+              </label>
+            </div>
+
+            <fieldset>
+              <legend>你以为自己是哪种球风</legend>
+              <div class="style-grid" id="style-grid">
+                <button type="button" data-style="翩翩公子" class="selected">翩翩公子</button>
+                <button type="button" data-style="中场大师">中场大师</button>
+                <button type="button" data-style="禁区杀手">禁区杀手</button>
+                <button type="button" data-style="爆点边锋">爆点边锋</button>
+                <button type="button" data-style="门线英雄">门线英雄</button>
+                <button type="button" data-style="快乐抽象派">快乐抽象派</button>
+              </div>
+            </fieldset>
+
+            <button class="primary" type="submit">一键生成命格</button>
+          </form>
+
+          <div class="flow-strip">
+            <span>输入</span>
+            <span>八字特征</span>
+            <span>球场维度</span>
+            <span>结果卡</span>
+          </div>
+        </section>
+
+        <section class="screen screen-loading" data-screen="loading">
+          <div class="loading-ball"></div>
+          <div>
+            <p class="eyebrow">SYSTEM REVEAL</p>
+            <h2 id="loading-title">正在换算你的球场命格</h2>
+            <p id="loading-line">五行强弱、十神结构、球场行为分同步计算中。</p>
+          </div>
+          <div class="loading-steps">
+            <span>出生信息</span>
+            <span>行为分</span>
+            <span>球员人设</span>
+          </div>
+        </section>
+
+        <section class="screen screen-result" data-screen="result">
+          <article class="result-card" id="result-card">
+            <div class="result-media">
+              <img id="result-image" alt="" />
+              <div class="media-shade"></div>
+              <div class="score-pill" id="top-score">控场 88</div>
+            </div>
+
+            <div class="result-copy">
+              <p class="eyebrow" id="result-id">RESULT 01</p>
+              <h2 id="result-role">葡萄牙武僧</h2>
+              <p class="result-line" id="result-summary">他不是防守，是给对面上纪律课。</p>
+              <div class="meta-row">
+                <span id="result-position">中后卫</span>
+                <span id="result-persona">球场恶汉</span>
+                <span id="result-confidence">置信度 92%</span>
+              </div>
+              <p class="reading" id="result-reading">金旺七杀，天生适合强硬对抗和高压拦截，越乱越能镇住场。</p>
+            </div>
+          </article>
+
+          <section class="detail-panel">
+            <div class="contrast">
+              <span>你以为</span>
+              <strong id="self-style">翩翩公子</strong>
+              <span>系统说</span>
+              <strong id="system-style">球场恶汉</strong>
+            </div>
+            <div class="score-grid" id="score-grid"></div>
+            <div class="element-row" id="element-row"></div>
+          </section>
+
+          <div class="action-row">
+            <button class="secondary" id="regen">再测一次</button>
+            <button class="primary" id="save-result">保存结果</button>
+          </div>
+          <button class="ghost" id="open-gallery">查看 96 个命格图库</button>
+        </section>
+
+        <section class="screen screen-gallery" data-screen="gallery">
+          <div class="gallery-head">
+            <div>
+              <p class="eyebrow">ARCHETYPE WALL</p>
+              <h2>96 个球场命格</h2>
+            </div>
+            <button id="close-gallery" aria-label="返回结果">返回</button>
+          </div>
+          <div class="gallery-toolbar">
+            <div class="page-size" aria-label="每页数量">
+              <button class="selected" data-page-size="8">8张</button>
+              <button data-page-size="16">16张</button>
+            </div>
+            <strong id="gallery-page-label">1 / 12</strong>
+          </div>
+          <div class="gallery-grid" id="gallery-grid"></div>
+          <div class="gallery-pager">
+            <button id="gallery-prev">上一页</button>
+            <button id="gallery-next">下一页</button>
+          </div>
+        </section>
+      </section>
+
+      <aside class="desktop-panel">
+        <div class="preview-card">
+          <img src="../../assets/generated/football-flow-v1/flow-concept-reference.png" alt="flow concept reference" />
+        </div>
+        <div class="copy-block">
+          <p class="eyebrow">LOCAL PREVIEW</p>
+          <h2>真实素材版</h2>
+          <p>当前版本使用 96 张已生成球员命格图、96 条文案和本地命理映射规则，模拟完整 H5 主路径。</p>
+        </div>
+        <div class="saved-box" id="saved-box">
+          <span>RESULT STORE</span>
+          <strong>只保存 result，不保存原始输入</strong>
+        </div>
+      </aside>
+    </main>
+
+    <script src="./players-data.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
