@@ -3,10 +3,10 @@ const ASSET_BASE = "../../assets/generated/player-archetypes-v1/";
 
 const state = {
   players: [],
-  selectedStyle: "翩翩公子",
+  selectedStyle: "后防中坚",
   currentResult: null,
   galleryPage: 0,
-  galleryPageSize: 8,
+  galleryPageSize: 16,
 };
 
 const scoreLabels = [
@@ -21,7 +21,7 @@ const scoreLabels = [
 const personaRules = [
   { name: "球场恶汉", key: "aggression", positions: ["中后卫", "后腰"] },
   { name: "冷脸会计", key: "control", positions: ["后腰", "中前卫"] },
-  { name: "翩翩公子", key: "elegance", positions: ["前腰", "中前卫", "右中场"] },
+  { name: "球场艺术家", key: "elegance", positions: ["前腰", "中前卫", "右中场"] },
   { name: "舞动精灵", key: "elegance", positions: ["前腰", "左边锋", "右边锋", "边锋"] },
   { name: "内切老汉", key: "explosive", positions: ["右边锋", "左边锋", "边锋"] },
   { name: "禁区杀手", key: "finishing", positions: ["中锋", "影锋"] },
@@ -194,7 +194,7 @@ function choosePersona(scores, topKey) {
   if (scores.chaos >= 82) return "快乐抽象派";
   if (topKey === "aggression") return scores.control > 74 ? "武僧铁卫" : "球场恶汉";
   if (topKey === "control") return "冷脸会计";
-  if (topKey === "elegance") return "翩翩公子";
+  if (topKey === "elegance") return "球场艺术家";
   if (topKey === "explosive") return "内切老汉";
   if (topKey === "finishing") return "禁区杀手";
   return "中场陀螺";
@@ -223,7 +223,7 @@ function pickPlayer(profile) {
       if (player.position === profile.position) score += 40;
       if (profile.persona.includes("抽象") && /抽象|快乐|喜剧|问号|蝎子|航母|林皇|挡/.test(player.copy)) score += 35;
       if (profile.persona.includes("恶汉") && /武僧|飞踹|铁血|铲车|七杀|高危/.test(player.copy)) score += 35;
-      if (profile.persona.includes("公子") && /优雅|翩翩|圆月|睡皮|小白|贵族/.test(player.copy)) score += 30;
+      if (profile.persona.includes("艺术家") && /优雅|翩翩|圆月|睡皮|小白|贵族|魔术/.test(player.copy)) score += 30;
       if (profile.persona.includes("禁区") && /中锋|神锋|杀手|终结|射手|重炮/.test(player.copy)) score += 30;
       if (profile.persona.includes("内切") && /边锋|爆点|内切|左路|右路|速度/.test(player.copy)) score += 30;
       score += hashText(`${profile.seed}-${player.id}`) % 25;
@@ -252,7 +252,7 @@ function renderResult(result) {
   $("#result-position").textContent = player.position;
   $("#result-persona").textContent = profile.persona;
   $("#result-confidence").textContent = `置信度 ${profile.confidence}%`;
-  $("#result-reading").textContent = player.reading;
+  $("#result-reading").textContent = formatReading(player.reading);
   $("#self-style").textContent = input.selfStyle;
   $("#system-style").textContent = profile.persona;
 
@@ -281,11 +281,15 @@ function renderResult(result) {
   updateSavedBox();
 }
 
+function formatReading(reading) {
+  return reading.replaceAll("命格", "球场画像");
+}
+
 function renderGallery() {
   const start = state.galleryPage * state.galleryPageSize;
   const pagePlayers = state.players.slice(start, start + state.galleryPageSize);
   const grid = $("#gallery-grid");
-  grid.classList.toggle("compact", state.galleryPageSize === 16);
+  grid.classList.add("compact");
   grid.innerHTML = pagePlayers
     .map((player) => `
       <article class="gallery-item" role="button" tabindex="0" data-id="${player.id}">
@@ -305,9 +309,6 @@ function renderGalleryControls() {
   $("#gallery-page-label").textContent = `${state.galleryPage + 1} / ${totalPages}`;
   $("#gallery-prev").disabled = state.galleryPage === 0;
   $("#gallery-next").disabled = state.galleryPage >= totalPages - 1;
-  document.querySelectorAll("[data-page-size]").forEach((button) => {
-    button.classList.toggle("selected", Number(button.dataset.pageSize) === state.galleryPageSize);
-  });
 }
 
 function selectGalleryPlayer(target) {
@@ -344,13 +345,6 @@ function bindGalleryEvents() {
     renderGallery();
   });
 
-  document.querySelectorAll("[data-page-size]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.galleryPageSize = Number(button.dataset.pageSize);
-      state.galleryPage = 0;
-      renderGallery();
-    });
-  });
 }
 
 function attachImagePaths(players) {
@@ -371,10 +365,12 @@ async function loadPlayers() {
 }
 
 function updateSavedBox() {
+  const savedBox = $("#saved-box");
+  if (!savedBox) return;
   const saved = localStorage.getItem("footballBirthrightResult");
   if (!saved) return;
   const parsed = JSON.parse(saved);
-  $("#saved-box").innerHTML = `
+  savedBox.innerHTML = `
     <span>RESULT STORE</span>
     <strong>已保存 ${parsed.role} · ${parsed.position}</strong>
   `;

@@ -41,19 +41,16 @@ button {
 .shell {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: minmax(320px, 430px) minmax(280px, 420px);
-  gap: 28px;
-  align-items: center;
-  justify-content: center;
-  padding: 28px;
+  place-items: center;
+  padding: 0;
 }
 
 .phone {
   position: relative;
-  width: min(430px, calc(100vw - 32px));
+  width: min(390px, calc(100vw - 32px));
   max-width: 100vw;
-  height: min(920px, calc(100vh - 40px));
-  min-height: 760px;
+  height: min(844px, calc(100vh - 40px));
+  min-height: 720px;
   border: 10px solid #171c1d;
   border-radius: 34px;
   overflow: hidden;
@@ -150,23 +147,16 @@ p {
 }
 
 h1 {
-  font-size: 38px;
+  font-size: 34px;
   line-height: 1.02;
   letter-spacing: 0;
+  overflow-wrap: anywhere;
 }
 
 h2 {
   font-size: 30px;
   line-height: 1.08;
   letter-spacing: 0;
-}
-
-.subcopy {
-  margin-top: 10px;
-  max-width: 330px;
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 14px;
-  line-height: 1.55;
 }
 
 .field-top {
@@ -221,17 +211,18 @@ select {
 
 .style-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
 }
 
 .style-grid button {
-  min-height: 38px;
+  min-height: 34px;
   border: 1px solid rgba(8, 19, 31, 0.12);
   border-radius: 7px;
   background: #f7f8f1;
   color: var(--ink);
-  font-size: 13px;
+  padding: 0 4px;
+  font-size: 12px;
   font-weight: 850;
 }
 
@@ -520,17 +511,6 @@ select {
   gap: 10px;
 }
 
-.page-size {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  width: 128px;
-  padding: 4px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.09);
-}
-
-.page-size button,
 .gallery-pager button {
   border: 0;
   border-radius: 999px;
@@ -540,13 +520,16 @@ select {
   font-weight: 950;
 }
 
-.page-size button {
+.gallery-toolbar span {
+  display: inline-flex;
   min-height: 30px;
-}
-
-.page-size button.selected {
-  background: var(--gold);
-  color: #11160f;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 12px;
+  font-weight: 950;
 }
 
 #gallery-page-label {
@@ -650,59 +633,6 @@ select {
   cursor: default;
 }
 
-.desktop-panel {
-  display: grid;
-  gap: 16px;
-  max-width: 420px;
-}
-
-.preview-card {
-  overflow: hidden;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: var(--shadow);
-}
-
-.preview-card img {
-  display: block;
-  width: 100%;
-}
-
-.copy-block,
-.saved-box {
-  border-radius: 12px;
-  padding: 18px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-}
-
-.copy-block h2 {
-  font-size: 32px;
-}
-
-.copy-block p:not(.eyebrow) {
-  margin-top: 10px;
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 15px;
-  line-height: 1.65;
-}
-
-.saved-box span {
-  display: block;
-  color: var(--gold);
-  font-size: 11px;
-  font-weight: 950;
-  letter-spacing: 0.08em;
-}
-
-.saved-box strong {
-  display: block;
-  margin-top: 8px;
-  font-size: 18px;
-  line-height: 1.35;
-}
-
 @media (max-width: 860px) {
   .shell {
     display: block;
@@ -720,10 +650,6 @@ select {
     min-height: 720px;
     border: 0;
     border-radius: 0;
-  }
-
-  .desktop-panel {
-    display: none;
   }
 
   .result-media {
