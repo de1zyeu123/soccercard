@@ -1,7 +1,7 @@
 const DATA_URL = "../../PRD/足球命格_96球员图文配对清单_v1.md";
 const ASSET_BASE = "../../assets/generated/player-archetypes-v1/";
 const QR_IMAGE_SRC = "./product-qr.png";
-const PRODUCT_URL = "https://de1zyeu123.github.io/soccercard/prototype/football-real-preview/";
+const PRODUCT_URL = "https://de1zyeu.tech/soccercard/";
 
 const state = {
   players: [],
@@ -9,6 +9,8 @@ const state = {
   currentResult: null,
   galleryPage: 0,
   galleryPageSize: 16,
+  sharePosterBlob: null,
+  sharePosterUrl: "",
 };
 
 const scoreLabels = [
@@ -61,16 +63,16 @@ const playerOverrides = {
 };
 
 const styleBias = {
-  后防中坚: { aggression: 10, control: 8 },
-  中场指挥官: { control: 14, elegance: 6 },
-  跑不死后腰: { control: 10, aggression: 8, chaos: 4 },
-  边路快马: { explosive: 16, finishing: 3 },
-  禁区杀手: { finishing: 16, aggression: 4 },
-  门线英雄: { control: 16, elegance: 4 },
-  快乐抽象派: { chaos: 16, explosive: 4 },
-  球王: { finishing: 8, elegance: 8, control: 8 },
-  假摔一哥: { chaos: 12, elegance: 6 },
-  暴力野兽: { aggression: 16, finishing: 5 },
+  后防中坚: { aggression: 20, control: 10, explosive: -8, chaos: -5 },
+  中场指挥官: { control: 24, elegance: 8, aggression: -6, chaos: -6 },
+  跑不死后腰: { control: 18, aggression: 12, elegance: -6 },
+  边路快马: { explosive: 24, finishing: 6, control: -6 },
+  禁区杀手: { finishing: 24, aggression: 6, elegance: -5 },
+  门线英雄: { control: 24, elegance: 6, chaos: -8 },
+  快乐抽象派: { chaos: 24, explosive: 8, control: -8 },
+  球王: { finishing: 15, elegance: 12, control: 8, chaos: -8 },
+  假摔一哥: { chaos: 20, elegance: 10, aggression: -5 },
+  暴力野兽: { aggression: 24, finishing: 8, elegance: -8 },
 };
 
 const personaRules = [
@@ -159,6 +161,34 @@ function clamp(value, min = 0, max = 100) {
   return Math.max(min, Math.min(max, Math.round(value)));
 }
 
+function shapeScoreByRank(rawScore, rank, seed) {
+  const bands = [
+    [84, 96],
+    [66, 80],
+    [48, 62],
+    [34, 48],
+    [24, 40],
+    [18, 34],
+  ];
+  const [min, max] = bands[rank] || bands[bands.length - 1];
+  const normalized = Math.max(0, Math.min(1, (rawScore - 34) / 62));
+  const wobble = ((seed >>> (rank * 4 + 3)) % 7) - 3;
+  return clamp(min + normalized * (max - min) + wobble, 16, 96);
+}
+
+function polarizeScores(rawScores, seed) {
+  const shaped = {};
+  const ranked = scoreLabels
+    .map(([key]) => [key, rawScores[key]])
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+
+  ranked.forEach(([key, value], rank) => {
+    shaped[key] = shapeScoreByRank(value, rank, seed);
+  });
+
+  return shaped;
+}
+
 function getFormData() {
   return {
     nickname: $("#nickname").value.trim(),
@@ -208,137 +238,135 @@ function calculateProfile(input) {
   };
 
   const scores = {
-    aggression: 44 + elements.金 * 0.23 + elements.土 * 0.12,
-    elegance: 42 + elements.水 * 0.18 + elements.木 * 0.14,
-    control: 42 + elements.水 * 0.24 + elements.土 * 0.16,
-    explosive: 42 + elements.木 * 0.22 + elements.火 * 0.2,
-    finishing: 42 + elements.金 * 0.16 + elements.火 * 0.22,
-    chaos: 36 + elements.火 * 0.14 + ((seed >>> 16) % 28),
+    aggression: 30 + elements.金 * 0.22 + elements.土 * 0.1,
+    elegance: 28 + elements.水 * 0.17 + elements.木 * 0.12,
+    control: 30 + elements.水 * 0.23 + elements.土 * 0.15,
+    explosive: 28 + elements.木 * 0.21 + elements.火 * 0.18,
+    finishing: 28 + elements.金 * 0.15 + elements.火 * 0.2,
+    chaos: 24 + elements.火 * 0.12 + ((seed >>> 16) % 24),
   };
 
-  if (traits.七杀) scores.aggression += 14;
+  if (traits.七杀) scores.aggression += 16;
   if (traits.伤官) {
-    scores.explosive += 9;
-    scores.chaos += 11;
+    scores.explosive += 10;
+    scores.chaos += 14;
   }
-  if (traits.食神) scores.elegance += 12;
-  if (traits.正官) scores.control += 12;
-  if (traits.财星) scores.finishing += 12;
+  if (traits.食神) scores.elegance += 15;
+  if (traits.正官) scores.control += 16;
+  if (traits.财星) scores.finishing += 16;
   if (traits.印旺) {
-    scores.control += 8;
-    scores.elegance += 6;
+    scores.control += 10;
+    scores.elegance += 5;
   }
   if (traits.比劫) {
-    scores.aggression += 8;
-    scores.explosive += 4;
-  }
-  if (traits.冲多) {
-    scores.chaos += 8;
+    scores.aggression += 11;
     scores.explosive += 5;
   }
+  if (traits.冲多) {
+    scores.chaos += 11;
+    scores.explosive += 6;
+  }
   if (traits.合多) {
-    scores.control += 6;
+    scores.control += 8;
     scores.elegance += 5;
-    scores.aggression -= 3;
+    scores.aggression -= 6;
   }
   if (traits.身强) {
-    scores.aggression += 4;
-    scores.finishing += 4;
+    scores.aggression += 5;
+    scores.finishing += 5;
   } else {
-    scores.elegance += 3;
-    scores.chaos += 4;
+    scores.elegance += 4;
+    scores.chaos += 5;
   }
 
   Object.entries(styleBias[input.selfStyle] || {}).forEach(([key, value]) => {
     scores[key] += value;
   });
 
-  Object.keys(scores).forEach((key) => {
-    scores[key] = clamp(scores[key]);
-  });
+  const shapedScores = polarizeScores(scores, seed);
   Object.keys(elements).forEach((key) => {
     elements[key] = clamp(elements[key], 20, 96);
   });
 
-  const maxScore = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
-  const persona = choosePersona(scores, maxScore[0]);
-  const position = choosePosition(scores, elements, input.selfStyle);
+  const maxScore = Object.entries(shapedScores).sort((a, b) => b[1] - a[1])[0];
+  const persona = choosePersona(shapedScores, maxScore[0]);
+  const position = choosePosition(shapedScores, elements, input.selfStyle);
   const confidence = input.birthtime === "unknown" ? 78 + (seed % 10) : 88 + (seed % 8);
-  const overall = calculateOverall(scores, confidence);
+  const overall = calculateOverall(shapedScores, confidence);
 
-  return { seed, elements, traits, scores, maxScore, persona, position, confidence, overall };
+  return { seed, elements, traits, scores: shapedScores, maxScore, persona, position, confidence, overall };
 }
 
 function calculateOverall(scores, confidence) {
   const values = Object.values(scores);
   const average = values.reduce((sum, value) => sum + value, 0) / values.length;
-  const peak = Math.max(...values);
-  return clamp(average * 0.58 + peak * 0.27 + confidence * 0.15, 50, 99);
+  const sorted = [...values].sort((a, b) => b - a);
+  const peak = sorted[0];
+  const second = sorted[1];
+  return clamp(peak * 0.52 + second * 0.18 + average * 0.2 + confidence * 0.1, 45, 98);
 }
 
 function buildPlayerPreviewProfile(input, player) {
   const text = `${player.role} ${player.summary} ${player.position} ${(player.tags || []).join(" ")}`;
   const seed = hashText(`${player.id}|${text}`);
   const scores = {
-    aggression: 48 + (seed % 19),
-    elegance: 48 + ((seed >>> 3) % 19),
-    control: 48 + ((seed >>> 6) % 19),
-    explosive: 48 + ((seed >>> 9) % 19),
-    finishing: 48 + ((seed >>> 12) % 19),
-    chaos: 45 + ((seed >>> 15) % 22),
+    aggression: 32 + (seed % 21),
+    elegance: 32 + ((seed >>> 3) % 21),
+    control: 32 + ((seed >>> 6) % 21),
+    explosive: 32 + ((seed >>> 9) % 21),
+    finishing: 32 + ((seed >>> 12) % 21),
+    chaos: 28 + ((seed >>> 15) % 24),
   };
 
   if (/武僧|屠夫|恶汉|飞踹|铲车|铁血|野兽|暴力|咆哮|铁卫|队魂/u.test(text)) {
-    scores.aggression += 24;
-    scores.chaos += 8;
+    scores.aggression += 30;
+    scores.chaos += 10;
   }
   if (/球王|艺术家|指挥官|优雅|贵族|定位球|舞|桑巴|魔术|油炸|诗人|小碎步/u.test(text)) {
-    scores.elegance += 24;
+    scores.elegance += 28;
     scores.control += 8;
   }
   if (/后腰|中前卫|指挥|节拍|发牌|导航|底盘|会计|补锅/u.test(text)) {
-    scores.control += 22;
+    scores.control += 30;
   }
   if (/边锋|快马|爆点|内切|腾云|高速|冲刺|永动机|单刀/u.test(text)) {
-    scores.explosive += 23;
+    scores.explosive += 30;
   }
   if (/中锋|射手|杀手|终结|进球|重炮|魔人|禁区|天神|坦克|支点/u.test(text)) {
-    scores.finishing += 24;
+    scores.finishing += 30;
   }
   if (/抽象|快乐|喜剧|问号|庆祝|挡拆|航母|蝎子|内马滚/u.test(text)) {
-    scores.chaos += 24;
+    scores.chaos += 30;
   }
   if (/门将|门神|门线|手套|扑救/u.test(text)) {
-    scores.control += 22;
+    scores.control += 30;
     scores.elegance += 8;
   }
 
-  Object.keys(scores).forEach((key) => {
-    scores[key] = clamp(scores[key], 42, 99);
-  });
+  const shapedScores = polarizeScores(scores, seed);
 
   const elements = {
-    木: clamp(scores.explosive - 4, 20, 96),
-    火: clamp(Math.max(scores.finishing, scores.chaos) - 3, 20, 96),
-    土: clamp(scores.control - 2, 20, 96),
-    金: clamp(scores.aggression - 2, 20, 96),
-    水: clamp(scores.elegance - 2, 20, 96),
+    木: clamp(shapedScores.explosive - 4, 20, 96),
+    火: clamp(Math.max(shapedScores.finishing, shapedScores.chaos) - 3, 20, 96),
+    土: clamp(shapedScores.control - 2, 20, 96),
+    金: clamp(shapedScores.aggression - 2, 20, 96),
+    水: clamp(shapedScores.elegance - 2, 20, 96),
   };
-  const maxScore = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
+  const maxScore = Object.entries(shapedScores).sort((a, b) => b[1] - a[1])[0];
   const confidence = 88 + (seed % 9);
-  const ratingLift = 10
-    + (/球王|GOAT|天神|艺术家|指挥官|优雅|禁区诗人|暴力终结|重炮射手/u.test(text) ? 8 : 0)
-    + (/少年|未来|灵感|阳光|冷脸/u.test(text) ? 4 : 0)
+  const ratingLift = 4
+    + (/球王|GOAT|天神|艺术家|指挥官|优雅|禁区诗人|暴力终结|重炮射手/u.test(text) ? 7 : 0)
+    + (/少年|未来|灵感|阳光|冷脸/u.test(text) ? 3 : 0)
     - (/喜剧|快乐抽象|航母|挡拆|庆祝|问号/u.test(text) ? 2 : 0);
-  const overall = clamp(calculateOverall(scores, confidence) + ratingLift, 76, 98);
+  const overall = clamp(calculateOverall(shapedScores, confidence) + ratingLift, 58, 96);
 
   return {
     seed,
     elements,
     traits: {},
-    scores,
+    scores: shapedScores,
     maxScore,
-    persona: player.tags?.[1] || choosePersona(scores, maxScore[0]),
+    persona: player.tags?.[1] || choosePersona(shapedScores, maxScore[0]),
     position: player.position,
     confidence,
     overall,
@@ -536,7 +564,7 @@ function renderRadar(scores) {
   const statPoints = scoreLabels
     .map(([key], index) => {
       const angle = (-90 + index * 60) * Math.PI / 180;
-      const radius = 14 + scores[key] / 100 * 42;
+      const radius = 6 + scores[key] / 100 * 42;
       return `${center + Math.cos(angle) * radius},${center + Math.sin(angle) * radius}`;
     })
     .join(" ");
@@ -770,7 +798,7 @@ function drawRadarCanvas(ctx, scores, x, y, radius) {
 
   const statPoints = scoreLabels.map(([key], index) => {
     const angle = (-90 + index * 60) * Math.PI / 180;
-    const statRadius = radius * (0.22 + scores[key] / 100 * 0.76);
+    const statRadius = radius * (0.08 + scores[key] / 100 * 0.86);
     return {
       x: centerX + Math.cos(angle) * statRadius,
       y: centerY + Math.sin(angle) * statRadius,
@@ -797,7 +825,18 @@ function drawRadarCanvas(ctx, scores, x, y, radius) {
   ctx.restore();
 }
 
-async function downloadShareCard() {
+function drawCanvasChip(ctx, label, x, y) {
+  ctx.font = "900 28px PingFang SC, sans-serif";
+  const width = Math.ceil(ctx.measureText(label).width) + 42;
+  roundedRect(ctx, x, y, width, 52, 26);
+  ctx.fillStyle = "rgba(255, 255, 255, 0.16)";
+  ctx.fill();
+  ctx.fillStyle = "#fffdf4";
+  ctx.fillText(label, x + 21, y + 36);
+  return x + width + 14;
+}
+
+async function buildSharePosterBlob() {
   const { input, profile, player } = state.currentResult;
   const displayRole = getDisplayRole(player);
   const [playerImage, qrImage] = await Promise.all([
@@ -806,87 +845,152 @@ async function downloadShareCard() {
   ]);
   const canvas = document.createElement("canvas");
   canvas.width = 1080;
-  canvas.height = 1620;
+  canvas.height = 1920;
   const ctx = canvas.getContext("2d");
-  const photoHeight = 1120;
+  const nickname = getDisplayNickname(input);
+  const contrast = state.selectedStyle ? `你以为你是${state.selectedStyle}，实际你是${displayRole}` : `你测出来是${displayRole}`;
+  const safeUrl = PRODUCT_URL.replace("https://", "").replace(/\/$/, "");
 
-  ctx.fillStyle = "#07120c";
+  ctx.fillStyle = "#050b08";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  drawCoverImage(ctx, playerImage, 0, 0, canvas.width, photoHeight);
+  drawCoverImage(ctx, playerImage, 0, 0, canvas.width, canvas.height);
 
-  const topGradient = ctx.createLinearGradient(0, 0, 0, 360);
-  topGradient.addColorStop(0, "rgba(0, 0, 0, 0.66)");
-  topGradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+  const topGradient = ctx.createLinearGradient(0, 0, 0, 420);
+  topGradient.addColorStop(0, "rgba(0, 0, 0, 0.74)");
+  topGradient.addColorStop(1, "rgba(0, 0, 0, 0.06)");
   ctx.fillStyle = topGradient;
-  ctx.fillRect(0, 0, canvas.width, 360);
+  ctx.fillRect(0, 0, canvas.width, 420);
 
-  const bottomGradient = ctx.createLinearGradient(0, 670, 0, photoHeight);
+  const sideGradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+  sideGradient.addColorStop(0, "rgba(0, 0, 0, 0.38)");
+  sideGradient.addColorStop(0.48, "rgba(0, 0, 0, 0)");
+  sideGradient.addColorStop(1, "rgba(0, 0, 0, 0.38)");
+  ctx.fillStyle = sideGradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const bottomGradient = ctx.createLinearGradient(0, 740, 0, canvas.height);
   bottomGradient.addColorStop(0, "rgba(0, 0, 0, 0)");
-  bottomGradient.addColorStop(1, "rgba(0, 0, 0, 0.82)");
+  bottomGradient.addColorStop(0.48, "rgba(0, 0, 0, 0.72)");
+  bottomGradient.addColorStop(1, "rgba(2, 6, 4, 0.96)");
   ctx.fillStyle = bottomGradient;
-  ctx.fillRect(0, 670, canvas.width, photoHeight - 670);
+  ctx.fillRect(0, 740, canvas.width, canvas.height - 740);
 
   ctx.fillStyle = "#f4c431";
-  ctx.font = "900 32px PingFang SC, sans-serif";
-  ctx.fillText(`命中球缘 · ${getDisplayNickname(input)}`, 64, 86);
-  ctx.fillStyle = "#fffdf4";
-  ctx.font = "900 86px PingFang SC, sans-serif";
-  wrapText(ctx, displayRole, 64, 180, 720, 94, 2);
-  ctx.font = "850 42px PingFang SC, sans-serif";
-  wrapText(ctx, player.summary, 64, 340, 680, 54, 2);
+  ctx.font = "900 34px PingFang SC, sans-serif";
+  ctx.fillText("测测你的命中球缘", 118, 92);
+  ctx.fillStyle = "rgba(255, 253, 244, 0.82)";
+  ctx.font = "800 24px PingFang SC, sans-serif";
+  ctx.fillText(`${nickname} 的球场报告`, 118, 136);
 
-  roundedRect(ctx, 660, 850, 334, 92, 46);
-  ctx.fillStyle = "#f4c431";
+  roundedRect(ctx, 760, 58, 198, 72, 36);
+  ctx.fillStyle = "rgba(244, 196, 49, 0.94)";
   ctx.fill();
   ctx.fillStyle = "#10150e";
-  ctx.font = "900 40px PingFang SC, sans-serif";
+  ctx.font = "900 28px PingFang SC, sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText(`综合能力值 ${profile.overall}`, 827, 909);
+  ctx.fillText(`能力值 ${profile.overall}`, 859, 104);
   ctx.textAlign = "left";
 
-  drawRadarCanvas(ctx, profile.scores, 825, 675, 120);
+  ctx.fillStyle = "rgba(255, 253, 244, 0.9)";
+  ctx.font = "900 34px PingFang SC, sans-serif";
+  wrapText(ctx, contrast, 118, 1080, 760, 48, 2);
 
   ctx.fillStyle = "#fffdf4";
-  ctx.fillRect(0, photoHeight, canvas.width, canvas.height - photoHeight);
-  ctx.fillStyle = "#09131f";
-  ctx.font = "900 54px PingFang SC, sans-serif";
-  ctx.fillText("测测你的命中球缘", 64, photoHeight + 90);
-  ctx.font = "800 34px PingFang SC, sans-serif";
-  ctx.fillStyle = "#223025";
-  wrapText(ctx, buildPlainReading(input, profile, player), 64, photoHeight + 155, 690, 48, 5);
+  const roleLength = Array.from(displayRole).length;
+  const roleFontSize = Math.max(82, Math.min(112, Math.floor(760 / Math.max(roleLength, 5))));
+  ctx.font = `900 ${roleFontSize}px PingFang SC, sans-serif`;
+  const titleEndY = wrapText(ctx, displayRole, 118, 1198, 760, 118, 2);
+  ctx.font = "900 42px PingFang SC, sans-serif";
+  wrapText(ctx, player.summary, 120, titleEndY + 18, 760, 54, 2);
 
-  roundedRect(ctx, 804, photoHeight + 118, 212, 212, 18);
+  let tagX = 118;
+  [player.position, player.persona, player.extraTag].filter(Boolean).slice(0, 3).forEach((tag) => {
+    tagX = drawCanvasChip(ctx, tag, tagX, 1426);
+  });
+
+  roundedRect(ctx, 96, 1514, 888, 306, 34);
+  ctx.fillStyle = "rgba(8, 18, 14, 0.86)";
+  ctx.fill();
+  ctx.strokeStyle = "rgba(244, 196, 49, 0.34)";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  ctx.fillStyle = "#f4c431";
+  ctx.font = "900 34px PingFang SC, sans-serif";
+  ctx.fillText("扫码开测", 132, 1586);
+  ctx.fillStyle = "#fffdf4";
+  ctx.font = "900 42px PingFang SC, sans-serif";
+  wrapText(ctx, "看看你命里是哪种球场角色", 132, 1646, 520, 54, 2);
+  ctx.font = "700 24px PingFang SC, sans-serif";
+  ctx.fillStyle = "rgba(255, 253, 244, 0.66)";
+  wrapText(ctx, safeUrl, 132, 1758, 500, 32, 2);
+
+  roundedRect(ctx, 720, 1548, 226, 226, 20);
   ctx.fillStyle = "#fff";
   ctx.fill();
-  ctx.drawImage(qrImage, 822, photoHeight + 136, 176, 176);
-  ctx.fillStyle = "#0d1510";
-  ctx.font = "800 25px PingFang SC, sans-serif";
+  ctx.drawImage(qrImage, 736, 1564, 194, 194);
+  ctx.fillStyle = "rgba(255, 253, 244, 0.78)";
+  ctx.font = "800 24px PingFang SC, sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("扫码来测", 910, photoHeight + 372);
-  ctx.font = "600 18px PingFang SC, sans-serif";
-  ctx.fillStyle = "#516055";
-  ctx.fillText(PRODUCT_URL.replace("https://", ""), 540, canvas.height - 48);
+  ctx.fillText("一键生成你的命中球缘", 833, 1806);
   ctx.textAlign = "left";
 
-  const blob = await new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     canvas.toBlob((nextBlob) => {
       if (nextBlob) resolve(nextBlob);
       else reject(new Error("Canvas export failed"));
     }, "image/png", 0.95);
   });
-  const link = document.createElement("a");
-  const safeRole = displayRole.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]+/g, "-");
-  link.href = URL.createObjectURL(blob);
-  link.download = `命中球缘-${safeRole}.png`;
+}
+
+function revokeSharePosterUrl() {
+  if (!state.sharePosterUrl) return;
+  URL.revokeObjectURL(state.sharePosterUrl);
+  state.sharePosterUrl = "";
+}
+
+async function openSharePoster() {
+  if (!state.currentResult) return;
+  const blob = await buildSharePosterBlob();
+  revokeSharePosterUrl();
+  state.sharePosterBlob = blob;
+  state.sharePosterUrl = URL.createObjectURL(blob);
+  $("#share-poster").src = state.sharePosterUrl;
+  $("#share-sheet").classList.add("open");
+  $("#share-sheet").classList.remove("clean");
+  $("#share-sheet").setAttribute("aria-hidden", "false");
   window.lastShareCardExport = {
-    role: displayRole,
+    role: getDisplayRole(state.currentResult.player),
     size: blob.size,
+    url: PRODUCT_URL,
     at: new Date().toISOString(),
   };
+}
+
+function closeSharePoster() {
+  $("#share-sheet").classList.remove("open", "clean");
+  $("#share-sheet").setAttribute("aria-hidden", "true");
+}
+
+function downloadPosterBlob() {
+  if (!state.sharePosterBlob || !state.currentResult) return;
+  const displayRole = getDisplayRole(state.currentResult.player);
+  const safeRole = displayRole.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]+/g, "-");
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(state.sharePosterBlob);
+  link.href = url;
+  link.download = `命中球缘-${safeRole}.png`;
   document.body.appendChild(link);
   link.click();
-  URL.revokeObjectURL(link.href);
   link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function downloadShareCard() {
+  if (!state.sharePosterBlob) {
+    state.sharePosterBlob = await buildSharePosterBlob();
+  }
+  downloadPosterBlob();
 }
 
 function updateSavedBox() {
@@ -945,7 +1049,36 @@ async function init() {
 
   $("#regen").addEventListener("click", () => showScreen("form"));
   $("#open-gallery")?.addEventListener("click", () => showScreen("gallery"));
-  $("#close-gallery").addEventListener("click", () => showScreen("result"));
+  $("#close-gallery").addEventListener("click", () => {
+    showScreen(state.currentResult ? "result" : "form");
+  });
+  $("#share-close").addEventListener("click", closeSharePoster);
+  $("#share-clean-mode").addEventListener("click", () => {
+    $("#share-sheet").classList.add("clean");
+  });
+  $("#share-poster-wrap").addEventListener("click", () => {
+    $("#share-sheet").classList.remove("clean");
+  });
+  $("#download-poster").addEventListener("click", async () => {
+    const button = $("#download-poster");
+    button.textContent = "下载中";
+    button.disabled = true;
+    try {
+      await downloadShareCard();
+      button.textContent = "已触发";
+    } catch (error) {
+      console.error(error);
+      button.textContent = "下载失败";
+    } finally {
+      setTimeout(() => {
+        button.textContent = "下载图片";
+        button.disabled = false;
+      }, 1000);
+    }
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeSharePoster();
+  });
   $("#save-result").addEventListener("click", async () => {
     if (!state.currentResult) return;
     const { player, profile } = state.currentResult;
@@ -963,14 +1096,14 @@ async function init() {
     button.textContent = "生成中";
     button.disabled = true;
     try {
-      await downloadShareCard();
-      button.textContent = "已下载";
+      await openSharePoster();
+      button.textContent = "可以分享了";
     } catch (error) {
       console.error(error);
-      button.textContent = "下载失败";
+      button.textContent = "生成失败";
     } finally {
       setTimeout(() => {
-        button.textContent = "下载分享图";
+        button.textContent = "分享给你的朋友";
         button.disabled = false;
       }, 1200);
     }
@@ -983,6 +1116,9 @@ async function init() {
     showScreen("result");
   }
   if (params.get("gallery") === "1" && params.get("internal") === "1") {
+    showScreen("gallery");
+  }
+  if (/\/library\/?$/u.test(window.location.pathname)) {
     showScreen("gallery");
   }
 }

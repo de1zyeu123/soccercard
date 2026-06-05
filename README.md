@@ -7,7 +7,13 @@
 Online:
 
 ```text
-https://de1zyeu123.github.io/soccercard/prototype/football-real-preview/
+https://de1zyeu.tech/soccercard/
+```
+
+Library:
+
+```text
+https://de1zyeu.tech/soccercard/library
 ```
 
 Open locally:
@@ -19,7 +25,7 @@ prototype/football-real-preview/index.html
 Direct gallery view:
 
 ```text
-prototype/football-real-preview/index.html?gallery=1
+prototype/football-real-preview/index.html?gallery=1&internal=1
 ```
 
 Direct result demo:

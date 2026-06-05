@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>测测你的命中球缘</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23087934'/%3E%3Ccircle cx='32' cy='32' r='13' fill='%23fffdf4'/%3E%3Cpath d='M32 6v52M6 32h52' stroke='%23f4c431' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="./styles.css?v=20260605-contrast-line-v2" />
+    <link rel="stylesheet" href="./styles.css?v=20260605-share-poster-v1" />
   </head>
   <body>
     <main class="shell">
@@ -141,7 +141,22 @@
 
           <div class="action-row">
             <button class="secondary" id="regen">再测一次</button>
-            <button class="primary" id="save-result">下载分享图</button>
+            <button class="primary" id="save-result">分享给你的朋友</button>
+          </div>
+        </section>
+
+        <section class="share-sheet" id="share-sheet" aria-hidden="true" aria-label="分享海报预览">
+          <div class="share-copy">
+            <strong>分享给你的朋友</strong>
+            <span>截图模式会隐藏按钮，海报内含产品入口二维码。</span>
+          </div>
+          <button class="share-close" id="share-close" type="button" aria-label="返回结果">返回</button>
+          <div class="share-poster-wrap" id="share-poster-wrap">
+            <img id="share-poster" alt="命中球缘分享海报" />
+          </div>
+          <div class="share-actions">
+            <button class="secondary" id="share-clean-mode" type="button">截图模式</button>
+            <button class="secondary" id="download-poster" type="button">下载图片</button>
           </div>
         </section>
 
@@ -168,6 +183,6 @@
     </main>
 
     <script src="./players-data.js?v=20260605-release1"></script>
-    <script src="./app.js?v=20260605-release1"></script>
+    <script src="./app.js?v=20260606-public-routes-v1"></script>
   </body>
 </html>
