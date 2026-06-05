@@ -5,7 +5,7 @@ const PRODUCT_URL = "https://de1zyeu123.github.io/soccercard/prototype/football-
 
 const state = {
   players: [],
-  selectedStyle: "后防中坚",
+  selectedStyle: "",
   currentResult: null,
   galleryPage: 0,
   galleryPageSize: 16,
@@ -407,7 +407,8 @@ function renderResult(result) {
 
   $("#result-image").src = player.image;
   $("#result-image").alt = getDisplayRole(player);
-  $("#result-id").textContent = `命中球缘 · ${input.nickname || "你"}`;
+  $("#result-id").textContent = `命中球缘 · ${getDisplayNickname(input)}`;
+  renderResultContrast(input, player);
   $("#result-role").textContent = getDisplayRole(player);
   $("#result-summary").textContent = player.summary;
   const resultTags = getResultTags(player, profile);
@@ -444,12 +445,12 @@ function updateReadingPanelLabel() {
 }
 
 function buildAnalysisSummary(profile, player) {
-  if (player.analysisSummary) {
-    return `你的命中球缘落在「${getDisplayRole(player)}」：${player.analysisSummary}`;
+  if (player.reading) {
+    return summarizeReading(player.reading);
   }
 
-  if (player.reading) {
-    return `你的命中球缘落在「${getDisplayRole(player)}」：${summarizeReading(player.reading)}`;
+  if (player.analysisSummary) {
+    return player.analysisSummary;
   }
 
   const [topKey] = profile.maxScore;
@@ -461,7 +462,7 @@ function buildAnalysisSummary(profile, player) {
     finishing: "机会不一定多，但门前那一下很认真。",
     chaos: "你的强项在反常规，别人很难提前猜到。",
   }[topKey];
-  return `你的命中球缘落在「${getDisplayRole(player)}」：${summary}`;
+  return summary;
 }
 
 function summarizeReading(reading) {
@@ -576,6 +577,22 @@ function formatGalleryRole(role) {
 
 function getDisplayRole(player) {
   return formatGalleryRole(player.role);
+}
+
+function renderResultContrast(input, player) {
+  const contrast = $("#result-contrast");
+  if (!contrast) return;
+  if (!input.selfStyle) {
+    contrast.hidden = true;
+    contrast.textContent = "";
+    return;
+  }
+  contrast.textContent = `你以为你是${input.selfStyle}，\n实际你是${getDisplayRole(player)}`;
+  contrast.hidden = false;
+}
+
+function getDisplayNickname(input) {
+  return input.nickname || "无名小卒";
 }
 
 function getResultTags(player, profile) {
@@ -811,7 +828,7 @@ async function downloadShareCard() {
 
   ctx.fillStyle = "#f4c431";
   ctx.font = "900 32px PingFang SC, sans-serif";
-  ctx.fillText(`命中球缘 · ${input.nickname || "你"}`, 64, 86);
+  ctx.fillText(`命中球缘 · ${getDisplayNickname(input)}`, 64, 86);
   ctx.fillStyle = "#fffdf4";
   ctx.font = "900 86px PingFang SC, sans-serif";
   wrapText(ctx, displayRole, 64, 180, 720, 94, 2);
@@ -927,7 +944,7 @@ async function init() {
   });
 
   $("#regen").addEventListener("click", () => showScreen("form"));
-  $("#open-gallery").addEventListener("click", () => showScreen("gallery"));
+  $("#open-gallery")?.addEventListener("click", () => showScreen("gallery"));
   $("#close-gallery").addEventListener("click", () => showScreen("result"));
   $("#save-result").addEventListener("click", async () => {
     if (!state.currentResult) return;
@@ -965,7 +982,7 @@ async function init() {
     renderResult(result);
     showScreen("result");
   }
-  if (params.get("gallery") === "1") {
+  if (params.get("gallery") === "1" && params.get("internal") === "1") {
     showScreen("gallery");
   }
 }
