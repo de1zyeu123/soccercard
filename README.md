@@ -1,8 +1,14 @@
 # Soccercard
 
-本命球员画像 H5 原型：用基础出生信息和自选球风生成“你天生像哪类球员”，输出可传播的球员人设结果页。
+命中球缘 H5 原型：用基础出生信息和自选球风生成你的本命球员画像，输出可下载、可转发的球员结果卡。
 
 ## Preview
+
+Online:
+
+```text
+https://de1zyeu123.github.io/soccercard/prototype/football-real-preview/
+```
 
 Open locally:
 
@@ -37,8 +43,8 @@ prototype/
 
 ## Current Prototype
 
-- 96 个本命球员画像库
+- 96 个命中球缘画像库
 - 16 张分页浏览
-- 本地 `file://` 可运行
-- 只保存 result layer，不保存原始出生输入
+- 本地 `file://` 和 GitHub Pages 均可运行
+- 只保存结果层，不保存原始出生输入
 - 结果页绑定真实生成素材和球员人设文案

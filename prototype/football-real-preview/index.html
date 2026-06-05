@@ -3,12 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>本命球员画像</title>
+    <title>测测你的命中球缘</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23087934'/%3E%3Ccircle cx='32' cy='32' r='13' fill='%23fffdf4'/%3E%3Cpath d='M32 6v52M6 32h52' stroke='%23f4c431' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <main class="shell">
-      <section class="phone" aria-label="本命球员画像">
+      <section class="phone" aria-label="测测你的命中球缘">
         <div class="status-bar">
           <span>20:26</span>
           <span>5G</span>
@@ -16,14 +17,14 @@
 
         <section class="screen screen-form active" data-screen="form">
           <div class="field-top">
-            <p class="eyebrow">FOOTBALL BIRTHRIGHT</p>
-            <h1>测测你的<br />本命球员画像</h1>
+            <p class="eyebrow">开球测试</p>
+            <h1>测测你的<br />命中球缘</h1>
           </div>
 
           <form id="birth-form" class="form-card">
             <label>
               <span>昵称</span>
-              <input id="nickname" name="nickname" maxlength="12" value="Zhen" />
+              <input id="nickname" name="nickname" maxlength="12" placeholder="输入你的昵称" />
             </label>
 
             <div class="grid-2">
@@ -74,7 +75,6 @@
                 <button type="button" data-style="跑不死后腰">跑不死后腰</button>
                 <button type="button" data-style="边路快马">边路快马</button>
                 <button type="button" data-style="禁区杀手">禁区杀手</button>
-                <button type="button" data-style="爆点边锋">爆点边锋</button>
                 <button type="button" data-style="门线英雄">门线英雄</button>
                 <button type="button" data-style="快乐抽象派">快乐抽象派</button>
                 <button type="button" data-style="球王">球王</button>
@@ -83,23 +83,16 @@
               </div>
             </fieldset>
 
-            <button class="primary" type="submit">一键生成你的本命球员画像</button>
+            <button class="primary" type="submit">一键生成你的命中球缘</button>
           </form>
-
-          <div class="flow-strip">
-            <span>输入</span>
-            <span>球风</span>
-            <span>画像</span>
-            <span>分享</span>
-          </div>
         </section>
 
         <section class="screen screen-loading" data-screen="loading">
           <div class="loading-ball"></div>
           <div>
-            <p class="eyebrow">SYSTEM REVEAL</p>
-            <h2 id="loading-title">正在生成你的本命球员画像</h2>
-            <p id="loading-line">五行强弱、十神结构、球场行为分同步计算中。</p>
+            <p class="eyebrow">生成中</p>
+            <h2 id="loading-title">正在生成你的命中球缘</h2>
+            <p id="loading-line">出生节奏、球风偏好、球员画像同步计算中。</p>
           </div>
           <div class="loading-steps">
             <span>出生信息</span>
@@ -113,36 +106,41 @@
             <div class="result-media">
               <img id="result-image" alt="" />
               <div class="media-shade"></div>
-              <div class="score-pill" id="top-score">控场 88</div>
+              <div class="result-overlay">
+                <p class="eyebrow" id="result-id">命中球缘</p>
+                <h2 id="result-role">球场武僧</h2>
+                <p class="result-line" id="result-summary">少林足球第一人</p>
+              </div>
+              <div class="overall-pill" id="top-score">综合能力值 88</div>
+              <div class="radar-card" aria-label="六维能力图">
+                <svg id="radar-chart" viewBox="0 0 164 164" role="img"></svg>
+              </div>
             </div>
 
             <div class="result-copy">
-              <p class="eyebrow" id="result-id">RESULT 01</p>
-              <h2 id="result-role">葡萄牙武僧</h2>
-              <p class="result-line" id="result-summary">他不是防守，是给对面上纪律课。</p>
+              <section class="reading-panel" id="reading-panel">
+                <div class="reading-head">
+                  <div>
+                    <strong>你的球缘分析</strong>
+                    <p id="reading-summary">你的球缘更偏硬仗型，越到五五开越想上强度。</p>
+                  </div>
+                  <button type="button" id="reading-toggle" aria-expanded="false" aria-controls="reading-drawer">展开</button>
+                </div>
+                <div class="reading-drawer" id="reading-drawer" aria-hidden="true">
+                <p class="reading" id="result-reading">你的球缘更偏硬仗型，越到五五开越想上强度，所以系统给你配了这个球员。</p>
+                </div>
+              </section>
               <div class="meta-row">
                 <span id="result-position">中后卫</span>
                 <span id="result-persona">球场恶汉</span>
-                <span id="result-confidence">置信度 92%</span>
+                <span id="result-extra-tag">总裁保镖</span>
               </div>
-              <p class="reading" id="result-reading">金旺七杀，天生适合强硬对抗和高压拦截，越乱越能镇住场。</p>
             </div>
           </article>
 
-          <section class="detail-panel">
-            <div class="contrast">
-              <span>你以为</span>
-              <strong id="self-style">后防中坚</strong>
-              <span>系统说</span>
-              <strong id="system-style">球场恶汉</strong>
-            </div>
-            <div class="score-grid" id="score-grid"></div>
-            <div class="element-row" id="element-row"></div>
-          </section>
-
           <div class="action-row">
             <button class="secondary" id="regen">再测一次</button>
-            <button class="primary" id="save-result">保存结果</button>
+            <button class="primary" id="save-result">下载分享图</button>
           </div>
           <button class="ghost" id="open-gallery">查看 96 个球员画像库</button>
         </section>
@@ -150,8 +148,8 @@
         <section class="screen screen-gallery" data-screen="gallery">
           <div class="gallery-head">
             <div>
-              <p class="eyebrow">ARCHETYPE WALL</p>
-              <h2>96 个本命球员画像</h2>
+              <p class="eyebrow">球员画像库</p>
+              <h2>96 种命中球缘</h2>
             </div>
             <button id="close-gallery" aria-label="返回结果">返回</button>
           </div>
@@ -169,7 +167,7 @@
 
     </main>
 
-    <script src="./players-data.js"></script>
-    <script src="./app.js"></script>
+    <script src="./players-data.js?v=20260605-release1"></script>
+    <script src="./app.js?v=20260605-release1"></script>
   </body>
 </html>
