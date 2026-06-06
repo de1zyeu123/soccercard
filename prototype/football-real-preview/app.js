@@ -1,5 +1,8 @@
 const DATA_URL = "../../PRD/足球命格_96球员图文配对清单_v1.md";
-const ASSET_BASE = "../../assets/generated/player-archetypes-v1/";
+const PUBLIC_ROUTE = window.location.pathname.startsWith("/soccercard") ? "/soccercard/" : "";
+const ASSET_BASE = PUBLIC_ROUTE
+  ? `${PUBLIC_ROUTE}assets/generated/player-archetypes-v1/`
+  : "../../assets/generated/player-archetypes-v1/";
 const QR_IMAGE_SRC = "./product-qr.png";
 const PRODUCT_URL = "https://de1zyeu.tech/soccercard/";
 
@@ -194,10 +197,24 @@ function getFormData() {
     nickname: $("#nickname").value.trim(),
     gender: $("#gender").value,
     birthplace: $("#birthplace").value.trim() || "未知城市",
-    birthdate: $("#birthdate").value || "2000-01-01",
+    birthdate: normalizeBirthdate($("#birthdate").value),
     birthtime: $("#birthtime").value,
     selfStyle: state.selectedStyle,
   };
+}
+
+function normalizeBirthdate(value) {
+  const normalized = String(value || "")
+    .trim()
+    .replace(/[年/.]/gu, "-")
+    .replace(/[月]/gu, "-")
+    .replace(/[日号]/gu, "")
+    .replace(/-+/gu, "-")
+    .replace(/^-|-$/gu, "");
+  const matchResult = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/u);
+  if (!matchResult) return "2000-01-01";
+  const [, year, month, day] = matchResult;
+  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 }
 
 function calculateProfile(input) {
