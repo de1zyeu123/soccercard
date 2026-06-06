@@ -554,7 +554,9 @@ function renderResult(result) {
 
   $("#result-image").src = player.image;
   $("#result-image").alt = getDisplayRole(player);
-  $("#result-id").textContent = `命中球缘 · ${getDisplayNickname(input)}`;
+  const nicknameLabel = getDisplayNickname(input);
+  $("#result-id").textContent = nicknameLabel;
+  $("#result-id").hidden = !nicknameLabel;
   renderResultContrast(input, player);
   $("#result-role").textContent = getDisplayRole(player);
   $("#result-summary").textContent = player.summary;
@@ -739,7 +741,7 @@ function renderResultContrast(input, player) {
 }
 
 function getDisplayNickname(input) {
-  return input.nickname || "无名小卒";
+  return input.nickname.trim();
 }
 
 function getResultTags(player, profile) {
@@ -999,7 +1001,7 @@ async function buildSharePosterBlob() {
   ctx.fillText("测测你的命中球缘", 118, 92);
   ctx.fillStyle = "rgba(255, 253, 244, 0.82)";
   ctx.font = "800 24px PingFang SC, sans-serif";
-  ctx.fillText(`${nickname} 的球场报告`, 118, 136);
+  ctx.fillText(nickname ? `${nickname} 的球场报告` : "我的球场报告", 118, 136);
 
   roundedRect(ctx, 760, 58, 198, 72, 36);
   ctx.fillStyle = "rgba(244, 196, 49, 0.94)";
