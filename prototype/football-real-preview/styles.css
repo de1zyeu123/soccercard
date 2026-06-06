@@ -83,7 +83,6 @@ button {
   background:
     linear-gradient(180deg, rgba(4, 9, 9, 0.02) 0%, rgba(4, 9, 9, 0.14) 38%, rgba(3, 7, 6, 0.66) 67%, rgba(3, 7, 6, 0.96) 100%),
     url("/soccercard/assets/generated/football-landing-mystery-bg.png") center top / cover no-repeat,
-    url("../../assets/generated/football-landing-mystery-bg.png") center top / cover no-repeat,
     linear-gradient(180deg, #07120c 0%, #030706 100%);
 }
 
