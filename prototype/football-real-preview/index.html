@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>测测你的命中球缘</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23087934'/%3E%3Ccircle cx='32' cy='32' r='13' fill='%23fffdf4'/%3E%3Cpath d='M32 6v52M6 32h52' stroke='%23f4c431' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="./styles.css?v=20260607-main-cards-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260607-loading-ui-v1" />
   </head>
   <body>
     <main class="shell">
@@ -82,16 +82,26 @@
         </section>
 
         <section class="screen screen-loading" data-screen="loading">
-          <div class="loading-ball"></div>
-          <div>
+          <div class="loading-match" aria-hidden="true">
+            <div class="loading-goal goal-left"></div>
+            <div class="loading-goal goal-right"></div>
+            <div class="route route-one"></div>
+            <div class="route route-two"></div>
+            <div class="tactic-dot dot-one"></div>
+            <div class="tactic-dot dot-two"></div>
+            <div class="tactic-dot dot-three"></div>
+            <div class="loading-ball"></div>
+          </div>
+          <div class="loading-copy">
             <p class="eyebrow">生成中</p>
             <h2 id="loading-title">正在生成你的命中球缘</h2>
-            <p id="loading-line">出生节奏、球风偏好、球员画像同步计算中。</p>
+            <p id="loading-line">战术板已开，3 秒后揭晓你的球场角色。</p>
           </div>
+          <div class="loading-progress" aria-hidden="true"><span></span></div>
           <div class="loading-steps">
-            <span>出生信息</span>
-            <span>行为分</span>
-            <span>球员人设</span>
+            <span>排盘开球</span>
+            <span>球风对位</span>
+            <span>终场揭牌</span>
           </div>
         </section>
 
@@ -196,7 +206,7 @@
 
     </main>
 
-    <script src="./players-data.js?v=20260607-main-cards-v1"></script>
-    <script src="./app.js?v=20260607-main-cards-v1"></script>
+    <script src="./players-data.js?v=20260607-loading-ui-v1"></script>
+    <script src="./app.js?v=20260607-loading-ui-v1"></script>
   </body>
 </html>

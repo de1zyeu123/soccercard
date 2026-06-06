@@ -1302,11 +1302,10 @@ async function init() {
     showScreen("loading");
     const input = getFormData();
     const result = buildResult(input);
-    const delay = 3000 + (result.profile.seed % 2001);
     setTimeout(() => {
       renderResult(result);
       showScreen("result");
-    }, delay);
+    }, 3000);
   });
 
   $("#regen").addEventListener("click", () => showScreen("form"));
@@ -1381,6 +1380,9 @@ async function init() {
   }
   if (params.get("gallery") === "1" && params.get("internal") === "1") {
     showScreen("gallery");
+  }
+  if (params.get("loading") === "1") {
+    showScreen("loading");
   }
   if (isLibraryMode()) {
     showScreen("gallery");
