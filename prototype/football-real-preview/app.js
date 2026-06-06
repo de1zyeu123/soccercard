@@ -484,7 +484,52 @@ function calculateOverall(scores, confidence) {
   return clamp(peak * 0.52 + second * 0.18 + average * 0.2 + confidence * 0.1, 45, 98);
 }
 
+function getFixedPlayerStats(player) {
+  if (!player.stats) return null;
+  const stats = {};
+  const isValid = scoreLabels.every(([key]) => {
+    const value = Number(player.stats[key]);
+    if (!Number.isFinite(value)) return false;
+    stats[key] = clamp(value, 16, 96);
+    return true;
+  });
+  return isValid ? stats : null;
+}
+
+function buildElementsFromStats(scores) {
+  return {
+    木: clamp(scores.explosive - 4, 20, 96),
+    火: clamp(Math.max(scores.finishing, scores.chaos) - 3, 20, 96),
+    土: clamp(scores.control - 2, 20, 96),
+    金: clamp(scores.aggression - 2, 20, 96),
+    水: clamp(scores.elegance - 2, 20, 96),
+  };
+}
+
+function buildFixedPlayerProfile(input, player, fallbackProfile = {}) {
+  const fixedStats = getFixedPlayerStats(player);
+  if (!fixedStats) return null;
+  const seed = hashText(`fixed-card|${player.id}|${player.role}`);
+  const maxScore = Object.entries(fixedStats).sort((a, b) => b[1] - a[1])[0];
+  const confidence = 90;
+  return {
+    seed,
+    elements: buildElementsFromStats(fixedStats),
+    traits: fallbackProfile.traits || {},
+    scores: fixedStats,
+    maxScore,
+    persona: player.tags?.[1] || player.persona || choosePersona(fixedStats, maxScore[0]),
+    position: player.position,
+    confidence,
+    overall: player.overall || clamp(calculateOverall(fixedStats, confidence), 58, 96),
+    matchSeed: fallbackProfile.seed,
+  };
+}
+
 function buildPlayerPreviewProfile(input, player) {
+  const fixedProfile = buildFixedPlayerProfile(input, player);
+  if (fixedProfile) return fixedProfile;
+
   const text = `${player.role} ${player.summary} ${player.position} ${(player.tags || []).join(" ")}`;
   const seed = hashText(`${player.id}|${text}`);
   const scores = {
@@ -513,7 +558,7 @@ function buildPlayerPreviewProfile(input, player) {
   if (/中锋|射手|杀手|终结|进球|重炮|魔人|禁区|天神|坦克|支点/u.test(text)) {
     scores.finishing += 30;
   }
-  if (/抽象|快乐|喜剧|问号|庆祝|挡拆|航母|蝎子|内马滚/u.test(text)) {
+  if (/抽象|快乐|喜剧|反差|问号|庆祝|挡拆|航母|蝎子|内马滚/u.test(text)) {
     scores.chaos += 30;
   }
   if (/门将|门神|门线|手套|扑救/u.test(text)) {
@@ -640,13 +685,15 @@ function pickPlayer(profile, input = {}) {
 }
 
 function buildResult(input) {
-  const profile = calculateProfile(input);
-  const player = pickPlayer(profile, input);
-  return { input, profile, player };
+  const matchProfile = calculateProfile(input);
+  const player = pickPlayer(matchProfile, input);
+  const profile = buildFixedPlayerProfile(input, player, matchProfile) || matchProfile;
+  return { input, matchProfile, profile, player };
 }
 
 function renderResult(result) {
   const { input, profile, player } = result;
+  const explanationProfile = result.matchProfile || profile;
   state.currentResult = result;
 
   $("#result-image").src = player.image;
@@ -661,8 +708,8 @@ function renderResult(result) {
   $("#result-position").textContent = resultTags[0] || "";
   $("#result-persona").textContent = resultTags[1] || "";
   $("#result-extra-tag").textContent = resultTags[2] || "";
-  $("#reading-summary").textContent = buildAnalysisSummary(profile, player);
-  $("#result-reading").textContent = buildPlainReading(input, profile, player);
+  $("#reading-summary").textContent = buildAnalysisSummary(explanationProfile, player);
+  $("#result-reading").textContent = buildPlainReading(input, explanationProfile, player);
   setReadingPanelOpen(false);
 
   $("#top-score").textContent = `综合能力值 ${profile.overall}`;
