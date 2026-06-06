@@ -14,6 +14,7 @@ const state = {
   galleryPageSize: 16,
   sharePosterBlob: null,
   sharePosterUrl: "",
+  birthdateDraft: { year: 1998, month: 7, day: 10 },
 };
 
 const scoreLabels = [
@@ -204,6 +205,11 @@ function getFormData() {
 }
 
 function normalizeBirthdate(value) {
+  const parsed = parseBirthdate(value);
+  return formatBirthdateValue(parsed);
+}
+
+function parseBirthdate(value) {
   const normalized = String(value || "")
     .trim()
     .replace(/[年/.]/gu, "-")
@@ -212,9 +218,105 @@ function normalizeBirthdate(value) {
     .replace(/-+/gu, "-")
     .replace(/^-|-$/gu, "");
   const matchResult = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/u);
-  if (!matchResult) return "2000-01-01";
+  if (!matchResult) return { year: 2000, month: 1, day: 1 };
   const [, year, month, day] = matchResult;
-  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  const parsed = {
+    year: clamp(Number(year), 1940, new Date().getFullYear()),
+    month: clamp(Number(month), 1, 12),
+    day: clamp(Number(day), 1, 31),
+  };
+  parsed.day = clamp(parsed.day, 1, getDaysInMonth(parsed.year, parsed.month));
+  return parsed;
+}
+
+function formatBirthdateValue(dateParts) {
+  const year = String(dateParts.year);
+  const month = String(dateParts.month).padStart(2, "0");
+  const day = String(dateParts.day).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatBirthdateLabel(dateParts) {
+  return `${dateParts.year}年${dateParts.month}月${dateParts.day}日`;
+}
+
+function getDaysInMonth(year, month) {
+  return new Date(year, month, 0).getDate();
+}
+
+function updateBirthdateValue(dateParts) {
+  const normalized = {
+    year: dateParts.year,
+    month: dateParts.month,
+    day: clamp(dateParts.day, 1, getDaysInMonth(dateParts.year, dateParts.month)),
+  };
+  $("#birthdate").value = formatBirthdateValue(normalized);
+  $("#birthdate-trigger").textContent = formatBirthdateLabel(normalized);
+  state.birthdateDraft = { ...normalized };
+}
+
+function renderDateWheel(selector, values, selectedValue, labelFormatter) {
+  const wheel = $(selector);
+  wheel.innerHTML = values
+    .map((value) => `
+      <button type="button" data-value="${value}" class="${value === selectedValue ? "selected" : ""}">
+        ${labelFormatter(value)}
+      </button>
+    `)
+    .join("");
+}
+
+function scrollSelectedDateWheels() {
+  requestAnimationFrame(() => {
+    document.querySelectorAll(".date-wheel button.selected").forEach((button) => {
+      button.scrollIntoView({ block: "center" });
+    });
+  });
+}
+
+function renderDatePicker() {
+  const maxYear = new Date().getFullYear();
+  const yearValues = Array.from({ length: maxYear - 1940 + 1 }, (_, index) => 1940 + index);
+  const monthValues = Array.from({ length: 12 }, (_, index) => index + 1);
+  const dayCount = getDaysInMonth(state.birthdateDraft.year, state.birthdateDraft.month);
+  if (state.birthdateDraft.day > dayCount) state.birthdateDraft.day = dayCount;
+  const dayValues = Array.from({ length: dayCount }, (_, index) => index + 1);
+
+  renderDateWheel("#date-year-wheel", yearValues, state.birthdateDraft.year, (value) => `${value}年`);
+  renderDateWheel("#date-month-wheel", monthValues, state.birthdateDraft.month, (value) => `${value}月`);
+  renderDateWheel("#date-day-wheel", dayValues, state.birthdateDraft.day, (value) => `${value}日`);
+  scrollSelectedDateWheels();
+}
+
+function openDatePicker() {
+  state.birthdateDraft = parseBirthdate($("#birthdate").value);
+  renderDatePicker();
+  $("#date-sheet").classList.add("open");
+  $("#date-sheet").setAttribute("aria-hidden", "false");
+}
+
+function closeDatePicker({ apply = false } = {}) {
+  if (apply) updateBirthdateValue(state.birthdateDraft);
+  $("#date-sheet").classList.remove("open");
+  $("#date-sheet").setAttribute("aria-hidden", "true");
+}
+
+function bindDatePicker() {
+  updateBirthdateValue(parseBirthdate($("#birthdate").value));
+  $("#birthdate-trigger").addEventListener("click", openDatePicker);
+  $("#date-cancel").addEventListener("click", () => closeDatePicker());
+  $("#date-confirm").addEventListener("click", () => closeDatePicker({ apply: true }));
+  $("#date-sheet").addEventListener("click", (event) => {
+    if (event.target === $("#date-sheet")) closeDatePicker();
+  });
+  document.querySelectorAll(".date-wheel").forEach((wheel) => {
+    wheel.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-value]");
+      if (!button) return;
+      state.birthdateDraft[wheel.dataset.wheel] = Number(button.dataset.value);
+      renderDatePicker();
+    });
+  });
 }
 
 function calculateProfile(input) {
@@ -1026,6 +1128,7 @@ async function init() {
   state.players = await loadPlayers();
   renderGallery();
   bindGalleryEvents();
+  bindDatePicker();
   updateSavedBox();
   $("#reading-toggle")?.addEventListener("click", (event) => {
     event.preventDefault();
@@ -1095,6 +1198,7 @@ async function init() {
   });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") closeSharePoster();
+    if (event.key === "Escape") closeDatePicker();
   });
   $("#save-result").addEventListener("click", async () => {
     if (!state.currentResult) return;

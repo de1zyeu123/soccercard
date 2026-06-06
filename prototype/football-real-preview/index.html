@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>测测你的命中球缘</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23087934'/%3E%3Ccircle cx='32' cy='32' r='13' fill='%23fffdf4'/%3E%3Cpath d='M32 6v52M6 32h52' stroke='%23f4c431' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="./styles.css?v=20260606-mobile-fix-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260606-birth-picker-v1" />
   </head>
   <body>
     <main class="shell">
@@ -40,24 +40,25 @@
             <div class="grid-2">
               <label>
                 <span>出生日期</span>
-                <input id="birthdate" name="birthdate" type="text" value="1998-07-10" inputmode="numeric" autocomplete="bday" />
+                <button class="date-trigger" id="birthdate-trigger" type="button" aria-haspopup="dialog">1998年7月10日</button>
+                <input id="birthdate" name="birthdate" type="hidden" value="1998-07-10" />
               </label>
               <label>
                 <span>出生时间</span>
                 <select id="birthtime" name="birthtime">
                   <option value="unknown">不知道</option>
-                  <option value="0">00:00-01:59</option>
-                  <option value="2">02:00-03:59</option>
-                  <option value="4">04:00-05:59</option>
-                  <option value="6">06:00-07:59</option>
-                  <option value="8" selected>08:00-09:59</option>
-                  <option value="10">10:00-11:59</option>
-                  <option value="12">12:00-13:59</option>
-                  <option value="14">14:00-15:59</option>
-                  <option value="16">16:00-17:59</option>
-                  <option value="18">18:00-19:59</option>
-                  <option value="20">20:00-21:59</option>
-                  <option value="22">22:00-23:59</option>
+                  <option value="23">子时 23:00-00:59</option>
+                  <option value="1">丑时 01:00-02:59</option>
+                  <option value="3">寅时 03:00-04:59</option>
+                  <option value="5">卯时 05:00-06:59</option>
+                  <option value="7" selected>辰时 07:00-08:59</option>
+                  <option value="9">巳时 09:00-10:59</option>
+                  <option value="11">午时 11:00-12:59</option>
+                  <option value="13">未时 13:00-14:59</option>
+                  <option value="15">申时 15:00-16:59</option>
+                  <option value="17">酉时 17:00-18:59</option>
+                  <option value="19">戌时 19:00-20:59</option>
+                  <option value="21">亥时 21:00-22:59</option>
                 </select>
               </label>
             </div>
@@ -155,6 +156,21 @@
           </div>
         </section>
 
+        <section class="date-sheet" id="date-sheet" aria-hidden="true" aria-label="选择出生日期">
+          <div class="date-dialog" role="dialog" aria-modal="true" aria-labelledby="date-picker-title">
+            <div class="date-sheet-head">
+              <button type="button" id="date-cancel">取消</button>
+              <strong id="date-picker-title">选择出生日期</strong>
+              <button type="button" id="date-confirm">确定</button>
+            </div>
+            <div class="date-wheels" aria-label="出生日期滚轮">
+              <div class="date-wheel" id="date-year-wheel" data-wheel="year" aria-label="年份"></div>
+              <div class="date-wheel" id="date-month-wheel" data-wheel="month" aria-label="月份"></div>
+              <div class="date-wheel" id="date-day-wheel" data-wheel="day" aria-label="日期"></div>
+            </div>
+          </div>
+        </section>
+
         <section class="screen screen-gallery" data-screen="gallery">
           <div class="gallery-head">
             <div>
@@ -178,6 +194,6 @@
     </main>
 
     <script src="./players-data.js?v=20260605-release1"></script>
-    <script src="./app.js?v=20260606-mobile-fix-v1"></script>
+    <script src="./app.js?v=20260606-birth-picker-v1"></script>
   </body>
 </html>

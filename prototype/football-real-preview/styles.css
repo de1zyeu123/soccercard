@@ -82,7 +82,7 @@ button {
   flex-direction: column;
   background:
     linear-gradient(180deg, rgba(4, 9, 9, 0.02) 0%, rgba(4, 9, 9, 0.14) 38%, rgba(3, 7, 6, 0.66) 67%, rgba(3, 7, 6, 0.96) 100%),
-    url("/soccercard/assets/generated/football-landing-mystery-bg.png") center top / cover no-repeat,
+    url("./football-landing-mystery-bg.png") center top / cover no-repeat,
     linear-gradient(180deg, #07120c 0%, #030706 100%);
 }
 
@@ -247,7 +247,8 @@ legend {
 }
 
 input,
-select {
+select,
+.date-trigger {
   width: 100%;
   min-width: 0;
   height: 38px;
@@ -263,6 +264,12 @@ select {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.68);
   appearance: none;
   -webkit-appearance: none;
+}
+
+.date-trigger {
+  display: grid;
+  place-items: center;
+  text-align: center;
 }
 
 select {
@@ -299,12 +306,22 @@ input::placeholder {
   min-width: 0;
 }
 
-#birthdate,
+#birthdate-trigger,
 #birthtime {
   padding-inline: 8px;
-  font-size: clamp(13px, 3.8vw, 16px);
+  font-size: clamp(12px, 3.45vw, 15px);
   font-weight: 900;
   text-align: center;
+}
+
+#birthtime {
+  padding-left: 6px;
+  padding-right: 20px;
+  font-size: clamp(10px, 2.95vw, 12px);
+  background:
+    linear-gradient(45deg, transparent 50%, #07120c 50%) right 12px center / 6px 6px no-repeat,
+    linear-gradient(135deg, #07120c 50%, transparent 50%) right 8px center / 6px 6px no-repeat,
+    rgba(255, 253, 244, 0.94);
 }
 
 .style-grid {
@@ -843,6 +860,115 @@ input::placeholder {
 .gallery-pager button:disabled {
   opacity: 0.36;
   cursor: default;
+}
+
+.date-sheet {
+  position: absolute;
+  inset: 0;
+  z-index: 38;
+  display: none;
+  align-items: flex-end;
+  padding: 0 12px 12px;
+  background: rgba(0, 0, 0, 0.46);
+  color: #fffdf4;
+}
+
+.date-sheet.open {
+  display: flex;
+}
+
+.date-dialog {
+  width: 100%;
+  border: 1px solid rgba(244, 196, 49, 0.28);
+  border-radius: 16px;
+  padding: 12px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(244, 196, 49, 0.18), transparent 12rem),
+    linear-gradient(180deg, rgba(25, 38, 34, 0.98), rgba(7, 16, 13, 0.98));
+  box-shadow: 0 -18px 46px rgba(0, 0, 0, 0.44);
+}
+
+.date-sheet-head {
+  display: grid;
+  grid-template-columns: 58px 1fr 58px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.date-sheet-head strong {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.date-sheet-head button {
+  min-height: 36px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fffdf4;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+#date-confirm {
+  background: rgba(244, 196, 49, 0.94);
+  color: #10150e;
+}
+
+.date-wheels {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.25fr 1fr 1fr;
+  gap: 8px;
+  height: 206px;
+  overflow: hidden;
+}
+
+.date-wheels::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 82px;
+  height: 42px;
+  border: 1px solid rgba(244, 196, 49, 0.3);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.07);
+  pointer-events: none;
+}
+
+.date-wheel {
+  position: relative;
+  z-index: 1;
+  overflow-y: auto;
+  padding: 82px 0;
+  scroll-snap-type: y mandatory;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.date-wheel::-webkit-scrollbar {
+  display: none;
+}
+
+.date-wheel button {
+  width: 100%;
+  height: 42px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(255, 253, 244, 0.62);
+  font-size: 16px;
+  font-weight: 850;
+  scroll-snap-align: center;
+}
+
+.date-wheel button.selected {
+  color: #fffdf4;
+  font-size: 18px;
+  font-weight: 950;
 }
 
 .share-sheet {
