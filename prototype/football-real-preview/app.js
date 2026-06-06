@@ -12,6 +12,7 @@ const state = {
   currentResult: null,
   galleryPage: 0,
   galleryPageSize: 16,
+  galleryDetailIndex: -1,
   sharePosterBlob: null,
   sharePosterUrl: "",
   birthdateDraft: { year: 1998, month: 7, day: 10 },
@@ -98,6 +99,11 @@ function showScreen(name) {
   document.querySelectorAll(".screen").forEach((screen) => {
     screen.classList.toggle("active", screen.dataset.screen === name);
   });
+}
+
+function isLibraryMode() {
+  const params = new URLSearchParams(window.location.search);
+  return /\/library\/?$/u.test(window.location.pathname) || params.get("library") === "1";
 }
 
 function parsePlayers(markdown) {
@@ -570,8 +576,18 @@ function renderResult(result) {
 
   $("#top-score").textContent = `综合能力值 ${profile.overall}`;
   renderRadar(profile.scores);
+  updateResultActionsForMode();
 
   updateSavedBox();
+}
+
+function updateResultActionsForMode() {
+  const libraryMode = isLibraryMode();
+  $(".action-row").hidden = libraryMode;
+  $("#library-detail-row").hidden = !libraryMode;
+  if (!libraryMode) return;
+  $("#library-prev-card").disabled = state.galleryDetailIndex <= 0;
+  $("#library-next-card").disabled = state.galleryDetailIndex >= state.players.length - 1;
 }
 
 function setReadingPanelOpen(isOpen) {
@@ -763,16 +779,38 @@ function renderGalleryControls() {
   $("#gallery-next").disabled = state.galleryPage >= totalPages - 1;
 }
 
-function selectGalleryPlayer(target) {
-  const item = target.closest(".gallery-item");
-  if (!item) return;
-  const player = state.players.find((entry) => entry.id === Number(item.dataset.id));
+function showGalleryPlayerAt(index) {
+  if (index < 0 || index >= state.players.length) return;
+  state.galleryDetailIndex = index;
+  state.galleryPage = Math.floor(index / state.galleryPageSize);
+  const player = state.players[index];
   if (!player) return;
   const input = getFormData();
   const profile = buildPlayerPreviewProfile(input, player);
   const result = { input, profile, player };
   renderResult(result);
   showScreen("result");
+}
+
+function selectGalleryPlayer(target) {
+  const item = target.closest(".gallery-item");
+  if (!item) return;
+  const index = state.players.findIndex((entry) => entry.id === Number(item.dataset.id));
+  if (index < 0) return;
+  showGalleryPlayerAt(index);
+}
+
+function returnToLibraryGallery() {
+  if (state.galleryDetailIndex >= 0) {
+    state.galleryPage = Math.floor(state.galleryDetailIndex / state.galleryPageSize);
+  }
+  renderGallery();
+  showScreen("gallery");
+}
+
+function showAdjacentGalleryPlayer(delta) {
+  const baseIndex = state.galleryDetailIndex < 0 ? 0 : state.galleryDetailIndex;
+  showGalleryPlayerAt(Math.max(0, Math.min(state.players.length - 1, baseIndex + delta)));
 }
 
 function bindGalleryEvents() {
@@ -797,6 +835,9 @@ function bindGalleryEvents() {
     renderGallery();
   });
 
+  $("#library-prev-card").addEventListener("click", () => showAdjacentGalleryPlayer(-1));
+  $("#library-next-card").addEventListener("click", () => showAdjacentGalleryPlayer(1));
+  $("#library-back").addEventListener("click", returnToLibraryGallery);
 }
 
 function attachImagePaths(players) {
@@ -1148,6 +1189,8 @@ async function init() {
     }, 260);
   });
   updateReadingPanelLabel();
+  $(".phone").classList.toggle("library-mode", isLibraryMode());
+  $("#close-gallery").hidden = isLibraryMode();
 
   $("#style-grid").addEventListener("click", (event) => {
     const button = event.target.closest("button[data-style]");
@@ -1172,6 +1215,7 @@ async function init() {
   $("#regen").addEventListener("click", () => showScreen("form"));
   $("#open-gallery")?.addEventListener("click", () => showScreen("gallery"));
   $("#close-gallery").addEventListener("click", () => {
+    if (isLibraryMode()) return;
     showScreen(state.currentResult ? "result" : "form");
   });
   $("#share-close").addEventListener("click", closeSharePoster);
@@ -1241,7 +1285,7 @@ async function init() {
   if (params.get("gallery") === "1" && params.get("internal") === "1") {
     showScreen("gallery");
   }
-  if (/\/library\/?$/u.test(window.location.pathname)) {
+  if (isLibraryMode()) {
     showScreen("gallery");
   }
 }
