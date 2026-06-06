@@ -67,6 +67,8 @@ const playerOverrides = {
   },
 };
 
+const roleCardIds = new Set([97, 98, 99, 100]);
+
 const styleBias = {
   后防中坚: { aggression: 20, control: 10, explosive: -8, chaos: -5 },
   中场指挥官: { control: 24, elegance: 8, aggression: -6, chaos: -6 },
@@ -74,9 +76,7 @@ const styleBias = {
   边路快马: { explosive: 24, finishing: 6, control: -6 },
   禁区杀手: { finishing: 24, aggression: 6, elegance: -5 },
   门线英雄: { control: 24, elegance: 6, chaos: -8 },
-  快乐抽象派: { chaos: 24, explosive: 8, control: -8 },
   球王: { finishing: 15, elegance: 12, control: 8, chaos: -8 },
-  假摔一哥: { chaos: 20, elegance: 10, aggression: -5 },
   暴力野兽: { aggression: 24, finishing: 8, elegance: -8 },
 };
 
@@ -88,7 +88,7 @@ const personaRules = [
   { name: "内切老汉", key: "explosive", positions: ["右边锋", "左边锋", "边锋"] },
   { name: "禁区杀手", key: "finishing", positions: ["中锋", "影锋"] },
   { name: "门线贵族", key: "control", positions: ["门将"] },
-  { name: "快乐抽象派", key: "chaos", positions: ["中锋", "前腰", "中后卫", "门将"] },
+  { name: "反差奇兵", key: "chaos", positions: ["中锋", "前腰", "中后卫", "门将"] },
 ];
 
 function $(selector) {
@@ -171,6 +171,10 @@ function clamp(value, min = 0, max = 100) {
   return Math.max(min, Math.min(max, Math.round(value)));
 }
 
+function getEffectiveBirthtime(value) {
+  return value === "unknown" ? "11" : value;
+}
+
 function shapeScoreByRank(rawScore, rank, seed) {
   const bands = [
     [84, 96],
@@ -200,12 +204,14 @@ function polarizeScores(rawScores, seed) {
 }
 
 function getFormData() {
+  const rawBirthtime = $("#birthtime").value;
   return {
     nickname: $("#nickname").value.trim(),
     gender: $("#gender").value,
     birthplace: $("#birthplace").value.trim() || "未知城市",
     birthdate: normalizeBirthdate($("#birthdate").value),
-    birthtime: $("#birthtime").value,
+    birthtime: getEffectiveBirthtime(rawBirthtime),
+    birthtimeRaw: rawBirthtime,
     selfStyle: state.selectedStyle,
   };
 }
@@ -280,6 +286,38 @@ function scrollSelectedDateWheels() {
   });
 }
 
+function getCenteredDateWheelValue(wheel) {
+  const wheelBox = wheel.getBoundingClientRect();
+  const wheelCenter = wheelBox.top + wheelBox.height / 2;
+  let closestButton = null;
+  let closestDistance = Number.POSITIVE_INFINITY;
+  wheel.querySelectorAll("button[data-value]").forEach((button) => {
+    const buttonBox = button.getBoundingClientRect();
+    const buttonCenter = buttonBox.top + buttonBox.height / 2;
+    const distance = Math.abs(buttonCenter - wheelCenter);
+    if (distance < closestDistance) {
+      closestDistance = distance;
+      closestButton = button;
+    }
+  });
+  return closestButton ? Number(closestButton.dataset.value) : null;
+}
+
+function syncDateWheelFromScroll(wheel) {
+  const value = getCenteredDateWheelValue(wheel);
+  if (!value) return;
+  const key = wheel.dataset.wheel;
+  if (state.birthdateDraft[key] === value) return;
+  state.birthdateDraft[key] = value;
+  updateBirthdateValue(state.birthdateDraft);
+  renderDatePicker();
+}
+
+function scheduleDateWheelSync(wheel) {
+  clearTimeout(wheel.dateScrollTimer);
+  wheel.dateScrollTimer = setTimeout(() => syncDateWheelFromScroll(wheel), 120);
+}
+
 function renderDatePicker() {
   const maxYear = new Date().getFullYear();
   const yearValues = Array.from({ length: maxYear - 1940 + 1 }, (_, index) => 1940 + index);
@@ -307,11 +345,24 @@ function closeDatePicker({ apply = false } = {}) {
   $("#date-sheet").setAttribute("aria-hidden", "true");
 }
 
+function updateBirthtimeHighlight() {
+  const select = $("#birthtime");
+  if (!select) return;
+  select.classList.toggle("time-defaulted", select.value === "unknown");
+}
+
+function bindBirthtimeHighlight() {
+  const select = $("#birthtime");
+  if (!select) return;
+  select.addEventListener("change", updateBirthtimeHighlight);
+  updateBirthtimeHighlight();
+}
+
 function bindDatePicker() {
   updateBirthdateValue(parseBirthdate($("#birthdate").value));
   $("#birthdate-trigger").addEventListener("click", openDatePicker);
   $("#date-cancel").addEventListener("click", () => closeDatePicker());
-  $("#date-confirm").addEventListener("click", () => closeDatePicker({ apply: true }));
+  $("#date-confirm").addEventListener("click", () => closeDatePicker());
   $("#date-sheet").addEventListener("click", (event) => {
     if (event.target === $("#date-sheet")) closeDatePicker();
   });
@@ -320,8 +371,10 @@ function bindDatePicker() {
       const button = event.target.closest("button[data-value]");
       if (!button) return;
       state.birthdateDraft[wheel.dataset.wheel] = Number(button.dataset.value);
+      updateBirthdateValue(state.birthdateDraft);
       renderDatePicker();
     });
+    wheel.addEventListener("scroll", () => scheduleDateWheelSync(wheel), { passive: true });
   });
 }
 
@@ -330,7 +383,7 @@ function calculateProfile(input) {
   const date = new Date(`${input.birthdate}T12:00:00`);
   const month = Number.isNaN(date.getTime()) ? 1 : date.getMonth() + 1;
   const day = Number.isNaN(date.getTime()) ? 1 : date.getDate();
-  const hour = input.birthtime === "unknown" ? 12 : Number(input.birthtime);
+  const hour = Number(input.birthtime);
 
   const elements = {
     木: 38 + ((seed >>> 1) % 26),
@@ -416,7 +469,7 @@ function calculateProfile(input) {
   const maxScore = Object.entries(shapedScores).sort((a, b) => b[1] - a[1])[0];
   const persona = choosePersona(shapedScores, maxScore[0]);
   const position = choosePosition(shapedScores, elements, input.selfStyle);
-  const confidence = input.birthtime === "unknown" ? 78 + (seed % 10) : 88 + (seed % 8);
+  const confidence = 88 + (seed % 8);
   const overall = calculateOverall(shapedScores, confidence);
 
   return { seed, elements, traits, scores: shapedScores, maxScore, persona, position, confidence, overall };
@@ -467,6 +520,22 @@ function buildPlayerPreviewProfile(input, player) {
     scores.control += 30;
     scores.elegance += 8;
   }
+  if (/裁判|哨|判官|红牌|黄牌|VAR/u.test(text)) {
+    scores.control += 32;
+    scores.chaos += 10;
+  }
+  if (/经理|主席|谈判|预算|合同|账本|豪门/u.test(text)) {
+    scores.control += 28;
+    scores.elegance += 12;
+  }
+  if (/教练|战术|更衣室|嘴硬|场边/u.test(text)) {
+    scores.control += 30;
+    scores.aggression += 10;
+  }
+  if (/球迷|饮水机|退钱|看台|场边/u.test(text)) {
+    scores.chaos += 28;
+    scores.control += 8;
+  }
 
   const shapedScores = polarizeScores(scores, seed);
 
@@ -499,7 +568,7 @@ function buildPlayerPreviewProfile(input, player) {
 }
 
 function choosePersona(scores, topKey) {
-  if (scores.chaos >= 82) return "快乐抽象派";
+  if (scores.chaos >= 82) return "反差奇兵";
   if (topKey === "aggression") return scores.control > 74 ? "武僧铁卫" : "球场恶汉";
   if (topKey === "control") return "冷脸会计";
   if (topKey === "elegance") return "球场艺术家";
@@ -524,13 +593,35 @@ function choosePosition(scores, elements, selfStyle) {
   return "中前卫";
 }
 
-function pickPlayer(profile) {
+function pickSpecialRoleCard(profile, input) {
+  const { scores, seed } = profile;
+  if (input.selfStyle === "球王" && (scores.finishing <= 58 || scores.chaos >= 70)) return 100;
+  if (input.selfStyle === "门线英雄" && scores.control >= 72 && seed % 7 === 0) return 97;
+  if (input.selfStyle === "中场指挥官" && scores.control >= 74 && scores.elegance >= 52 && seed % 4 === 0) return 98;
+  if (["后防中坚", "跑不死后腰"].includes(input.selfStyle) && scores.control >= 82 && seed % 6 === 0) return 99;
+  if (scores.chaos >= 86 && scores.finishing <= 52 && seed % 3 === 0) return 100;
+  if (scores.control >= 88 && scores.finishing <= 50 && seed % 11 === 0) return 97;
+  if (scores.elegance >= 78 && scores.control >= 68 && seed % 5 === 0) return 98;
+  if (scores.control >= 82 && scores.aggression >= 62 && seed % 7 === 0) return 99;
+  return null;
+}
+
+function getPlayerById(id) {
+  return state.players.find((player) => player.id === id) || null;
+}
+
+function pickPlayer(profile, input = {}) {
+  const specialId = pickSpecialRoleCard(profile, input);
+  const specialCard = specialId ? getPlayerById(specialId) : null;
+  if (specialCard) return specialCard;
+
   const preferred = state.players.filter((player) => {
+    if (roleCardIds.has(player.id)) return false;
     if (profile.persona === "门线贵族") return player.position === "门将";
     if (profile.position === "边锋") return player.position.includes("边锋");
     return player.position === profile.position;
   });
-  const pool = preferred.length >= 4 ? preferred : state.players;
+  const pool = preferred.length >= 4 ? preferred : state.players.filter((player) => !roleCardIds.has(player.id));
   const ranked = pool
     .map((player) => {
       let score = 0;
@@ -550,7 +641,7 @@ function pickPlayer(profile) {
 
 function buildResult(input) {
   const profile = calculateProfile(input);
-  const player = pickPlayer(profile);
+  const player = pickPlayer(profile, input);
   return { input, profile, player };
 }
 
@@ -676,6 +767,10 @@ function getPositionFit(position) {
   if (/边锋|左边锋|右边锋/.test(position)) return "沿着边路把对手拉开，靠速度、胆量和小动作制造爆点";
   if (/左后卫|右后卫/.test(position)) return "在边路攻防两头来回切换，把一条边线跑成自己的地盘";
   if (/中锋/.test(position)) return "站到禁区最危险的位置，把身体、嗅觉和最后一脚都用上";
+  if (/裁判/.test(position)) return "站在规则中间，别人踢得越乱，你越能用一声哨把比赛拽回来";
+  if (/经理/.test(position)) return "坐在包厢里改变量表，靠谈判、资源和预算把比赛提前布局";
+  if (/教练/.test(position)) return "站在场边管人和管节奏，让别人按你的剧本跑起来";
+  if (/球迷/.test(position)) return "在场边把情绪拉满，没碰球也能制造全场最强存在感";
   return "在球场上找到最适合自己的位置，把优势踢得很明显";
 }
 
@@ -752,7 +847,7 @@ function renderResultContrast(input, player) {
     contrast.textContent = "";
     return;
   }
-  contrast.textContent = `你以为你是${input.selfStyle}，\n实际你是${getDisplayRole(player)}`;
+  contrast.textContent = `你以为你是${input.selfStyle}\n实际你是${getDisplayRole(player)}`;
   contrast.hidden = false;
 }
 
@@ -1010,7 +1105,7 @@ async function buildSharePosterBlob() {
   canvas.height = 1920;
   const ctx = canvas.getContext("2d");
   const nickname = getDisplayNickname(input);
-  const contrast = state.selectedStyle ? `你以为你是${state.selectedStyle}，实际你是${displayRole}` : `你测出来是${displayRole}`;
+  const contrast = state.selectedStyle ? `你以为你是${state.selectedStyle} 实际你是${displayRole}` : `你测出来是${displayRole}`;
   const safeUrl = PRODUCT_URL.replace("https://", "").replace(/\/$/, "");
 
   ctx.fillStyle = "#050b08";
@@ -1066,7 +1161,7 @@ async function buildSharePosterBlob() {
   wrapText(ctx, player.summary, 120, titleEndY + 18, 760, 54, 2);
 
   let tagX = 118;
-  [player.position, player.persona, player.extraTag].filter(Boolean).slice(0, 3).forEach((tag) => {
+  getResultTags(player, profile).filter(Boolean).slice(0, 3).forEach((tag) => {
     tagX = drawCanvasChip(ctx, tag, tagX, 1426);
   });
 
@@ -1172,6 +1267,7 @@ async function init() {
   renderGallery();
   bindGalleryEvents();
   bindDatePicker();
+  bindBirthtimeHighlight();
   updateSavedBox();
   $("#reading-toggle")?.addEventListener("click", (event) => {
     event.preventDefault();
@@ -1206,10 +1302,11 @@ async function init() {
     showScreen("loading");
     const input = getFormData();
     const result = buildResult(input);
+    const delay = 3000 + (result.profile.seed % 2001);
     setTimeout(() => {
       renderResult(result);
       showScreen("result");
-    }, 900);
+    }, delay);
   });
 
   $("#regen").addEventListener("click", () => showScreen("form"));

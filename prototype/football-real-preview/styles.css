@@ -324,6 +324,15 @@ input::placeholder {
     rgba(255, 253, 244, 0.94);
 }
 
+#birthtime.time-defaulted {
+  border-color: rgba(244, 196, 49, 0.9);
+  background:
+    linear-gradient(45deg, transparent 50%, #07120c 50%) right 12px center / 6px 6px no-repeat,
+    linear-gradient(135deg, #07120c 50%, transparent 50%) right 8px center / 6px 6px no-repeat,
+    linear-gradient(180deg, rgba(255, 226, 92, 0.96), rgba(239, 184, 32, 0.94));
+  box-shadow: 0 0 0 2px rgba(244, 196, 49, 0.16);
+}
+
 .style-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

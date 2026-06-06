@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>测测你的命中球缘</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23087934'/%3E%3Ccircle cx='32' cy='32' r='13' fill='%23fffdf4'/%3E%3Cpath d='M32 6v52M6 32h52' stroke='%23f4c431' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="./styles.css?v=20260607-library-detail-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260607-main-cards-v1" />
   </head>
   <body>
     <main class="shell">
@@ -46,7 +46,7 @@
               <label>
                 <span>出生时间</span>
                 <select id="birthtime" name="birthtime">
-                  <option value="unknown">不知道</option>
+                  <option value="unknown">不知道（按午时）</option>
                   <option value="23">子时 23:00-00:59</option>
                   <option value="1">丑时 01:00-02:59</option>
                   <option value="3">寅时 03:00-04:59</option>
@@ -72,9 +72,7 @@
                 <button type="button" data-style="边路快马">边路快马</button>
                 <button type="button" data-style="禁区杀手">禁区杀手</button>
                 <button type="button" data-style="门线英雄">门线英雄</button>
-                <button type="button" data-style="快乐抽象派">快乐抽象派</button>
                 <button type="button" data-style="球王">球王</button>
-                <button type="button" data-style="假摔一哥">假摔一哥</button>
                 <button type="button" data-style="暴力野兽">暴力野兽</button>
               </div>
             </fieldset>
@@ -164,9 +162,9 @@
         <section class="date-sheet" id="date-sheet" aria-hidden="true" aria-label="选择出生日期">
           <div class="date-dialog" role="dialog" aria-modal="true" aria-labelledby="date-picker-title">
             <div class="date-sheet-head">
-              <button type="button" id="date-cancel">取消</button>
+              <button type="button" id="date-cancel">关闭</button>
               <strong id="date-picker-title">选择出生日期</strong>
-              <button type="button" id="date-confirm">确定</button>
+              <button type="button" id="date-confirm">完成</button>
             </div>
             <div class="date-wheels" aria-label="出生日期滚轮">
               <div class="date-wheel" id="date-year-wheel" data-wheel="year" aria-label="年份"></div>
@@ -180,7 +178,7 @@
           <div class="gallery-head">
             <div>
               <p class="eyebrow">球员画像库</p>
-              <h2>96 种命中球缘</h2>
+              <h2>100 种命中球缘</h2>
             </div>
             <button id="close-gallery" aria-label="返回结果">返回</button>
           </div>
@@ -198,7 +196,7 @@
 
     </main>
 
-    <script src="./players-data.js?v=20260605-release1"></script>
-    <script src="./app.js?v=20260607-library-detail-v1"></script>
+    <script src="./players-data.js?v=20260607-main-cards-v1"></script>
+    <script src="./app.js?v=20260607-main-cards-v1"></script>
   </body>
 </html>
