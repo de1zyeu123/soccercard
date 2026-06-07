@@ -5,6 +5,8 @@ const ASSET_BASE = PUBLIC_ROUTE
   : "../../assets/generated/player-archetypes-v1/";
 const QR_IMAGE_SRC = "./product-qr.png";
 const PRODUCT_URL = "https://de1zyeu.tech/soccercard/";
+const ASSET_VERSION = "20260607-review-v1";
+const ASSET_VERSION_SUFFIX = window.location.protocol === "file:" ? "" : `?v=${ASSET_VERSION}`;
 
 const state = {
   players: [],
@@ -68,6 +70,13 @@ const playerOverrides = {
 };
 
 const roleCardIds = new Set([97, 98, 99, 100]);
+const featuredCardIds = new Set([
+  1, 2, 3, 6, 9, 10, 12, 14, 17, 18, 19, 25, 29, 39, 40,
+  44, 50, 51, 52, 58, 62, 65, 92, 93, 94, 95, 97, 98, 99, 100,
+]);
+const FEATURED_CARD_WEIGHT = 4;
+const MATCH_SCORE_BAND = 15;
+const SPECIAL_ROLE_CHANCE = 0.1;
 
 const styleBias = {
   后防中坚: { aggression: 20, control: 10, explosive: -8, chaos: -5 },
@@ -638,17 +647,45 @@ function choosePosition(scores, elements, selfStyle) {
   return "中前卫";
 }
 
+function rollUnit(seed, salt) {
+  return (hashText(`${seed}|${salt}`) % 100000) / 100000;
+}
+
+function isFeaturedPlayer(player) {
+  return player.priority === "high" || featuredCardIds.has(player.id);
+}
+
+function weightedPick(entries, seed, salt) {
+  if (!entries.length) return null;
+  const totalWeight = entries.reduce((sum, entry) => sum + entry.weight, 0);
+  let ticket = rollUnit(seed, salt) * totalWeight;
+  for (const entry of entries) {
+    ticket -= entry.weight;
+    if (ticket <= 0) return entry.player;
+  }
+  return entries.at(-1).player;
+}
+
 function pickSpecialRoleCard(profile, input) {
   const { scores, seed } = profile;
-  if (input.selfStyle === "球王" && (scores.finishing <= 58 || scores.chaos >= 70)) return 100;
-  if (input.selfStyle === "门线英雄" && scores.control >= 72 && seed % 7 === 0) return 97;
-  if (input.selfStyle === "中场指挥官" && scores.control >= 74 && scores.elegance >= 52 && seed % 4 === 0) return 98;
-  if (["后防中坚", "跑不死后腰"].includes(input.selfStyle) && scores.control >= 82 && seed % 6 === 0) return 99;
-  if (scores.chaos >= 86 && scores.finishing <= 52 && seed % 3 === 0) return 100;
-  if (scores.control >= 88 && scores.finishing <= 50 && seed % 11 === 0) return 97;
-  if (scores.elegance >= 78 && scores.control >= 68 && seed % 5 === 0) return 98;
-  if (scores.control >= 82 && scores.aggression >= 62 && seed % 7 === 0) return 99;
-  return null;
+  const candidates = [];
+  const addCandidate = (id, condition, weight = 1) => {
+    if (condition) {
+      const player = getPlayerById(id);
+      if (player) candidates.push({ player, weight });
+    }
+  };
+
+  addCandidate(100, input.selfStyle === "球王" && (scores.finishing <= 65 || scores.chaos >= 65), 1.4);
+  addCandidate(97, input.selfStyle === "门线英雄" || (scores.control >= 86 && scores.finishing <= 56), 1);
+  addCandidate(98, input.selfStyle === "中场指挥官" && scores.control >= 72 && scores.elegance >= 50, 1.1);
+  addCandidate(99, ["后防中坚", "跑不死后腰"].includes(input.selfStyle) && scores.control >= 76 && scores.aggression >= 58, 1.1);
+  addCandidate(100, scores.chaos >= 86 && scores.finishing <= 56, 1.2);
+  addCandidate(98, scores.elegance >= 78 && scores.control >= 66, 0.9);
+  addCandidate(99, scores.control >= 82 && scores.aggression >= 62, 0.9);
+
+  if (!candidates.length || rollUnit(seed, "special-role") >= SPECIAL_ROLE_CHANCE) return null;
+  return weightedPick(candidates, seed, "special-role-pick")?.id || null;
 }
 
 function getPlayerById(id) {
@@ -681,7 +718,15 @@ function pickPlayer(profile, input = {}) {
     })
     .sort((a, b) => b.score - a.score);
 
-  return ranked[0].player;
+  const topScore = ranked[0].score;
+  const topBand = ranked.filter((entry) => entry.score >= topScore - MATCH_SCORE_BAND);
+  const weightedTopBand = topBand.map((entry) => {
+    const closeness = Math.max(0.35, 1 - (topScore - entry.score) / (MATCH_SCORE_BAND + 1));
+    const priorityWeight = isFeaturedPlayer(entry.player) ? FEATURED_CARD_WEIGHT : 1;
+    return { player: entry.player, weight: closeness * priorityWeight };
+  });
+
+  return weightedPick(weightedTopBand, profile.seed, "featured-card-pick") || ranked[0].player;
 }
 
 function buildResult(input) {
@@ -985,7 +1030,7 @@ function bindGalleryEvents() {
 function attachImagePaths(players) {
   return players.map((player) => ({
     ...applyPlayerOverride(player),
-    image: ASSET_BASE + player.file,
+    image: ASSET_BASE + player.file + ASSET_VERSION_SUFFIX,
   }));
 }
 
