@@ -12,3 +12,7 @@ dist/
 .vite/
 .env
 .env.*
+
+# Large local-only Soccercard image assets
+assets/generated/player-archetypes-v1/
+local_assets/

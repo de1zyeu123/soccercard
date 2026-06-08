@@ -1,8 +1,10 @@
 const DATA_URL = "../../PRD/足球命格_96球员图文配对清单_v1.md";
 const PUBLIC_ROUTE = window.location.pathname.startsWith("/soccercard") ? "/soccercard/" : "";
-const ASSET_BASE = PUBLIC_ROUTE
+const CARD_IMAGE_BASE_OVERRIDE = "";
+const DEFAULT_CARD_IMAGE_BASE = PUBLIC_ROUTE
   ? `${PUBLIC_ROUTE}assets/generated/player-archetypes-v1/`
   : "../../assets/generated/player-archetypes-v1/";
+const ASSET_BASE = normalizeAssetBase(window.SOCCERCARD_CARD_IMAGE_BASE || CARD_IMAGE_BASE_OVERRIDE || DEFAULT_CARD_IMAGE_BASE);
 const RADAR_BASE = PUBLIC_ROUTE
   ? `${PUBLIC_ROUTE}assets/generated/player-radars-v1/`
   : "../../assets/generated/player-radars-v1/";
@@ -10,6 +12,10 @@ const QR_IMAGE_SRC = "./product-qr.png";
 const PRODUCT_URL = "https://de1zyeu.tech/soccercard/";
 const ASSET_VERSION = "20260608-radar-v1";
 const ASSET_VERSION_SUFFIX = window.location.protocol === "file:" ? "" : `?v=${ASSET_VERSION}`;
+
+function normalizeAssetBase(base) {
+  return base.endsWith("/") ? base : `${base}/`;
+}
 
 const state = {
   players: [],
