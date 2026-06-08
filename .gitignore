@@ -1,11 +1,6 @@
 .DS_Store
 **/.DS_Store
 
-# Local / unrelated working artifacts
-Agent_Harness_报告.md
-model_pentagon.png
-model_progress_timeline.png
-
 # Runtime noise
 node_modules/
 dist/
@@ -13,6 +8,9 @@ dist/
 .env
 .env.*
 
-# Large local-only Soccercard image assets
-assets/generated/player-archetypes-v1/
-local_assets/
+# Large local-only Soccercard card assets
+assets/card/player-archetypes-v1/
+assets/card/*.zip
+
+# Local reference assets
+assets/others/reference/
