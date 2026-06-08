@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="132" height="132" viewBox="0 0 132 132" role="img" aria-label="饮水机球迷 六维能力图">
+  <defs>
+    <radialGradient id="panelGlow" cx="50%" cy="42%" r="62%">
+      <stop offset="0%" stop-color="#10251d" stop-opacity="0.62"/>
+      <stop offset="100%" stop-color="#03100c" stop-opacity="0.36"/>
+    </radialGradient>
+    <linearGradient id="goldFill" x1="30" y1="24" x2="100" y2="108" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffe45f" stop-opacity="0.86"/>
+      <stop offset="62%" stop-color="#f4c431" stop-opacity="0.64"/>
+      <stop offset="100%" stop-color="#9f7811" stop-opacity="0.50"/>
+    </linearGradient>
+  </defs>
+  <g>
+    <polygon points="33,7 99,7 128,66 99,125 33,125 4,66" fill="url(#panelGlow)" stroke="rgba(255,255,255,0.16)" stroke-width="0.9"/>
+    <polygon points="66.0,29.0 98.0,47.5 98.0,84.5 66.0,103.0 34.0,84.5 34.0,47.5" class="grid outer"/>
+    <polygon points="66.0,38.0 90.2,52.0 90.2,80.0 66.0,94.0 41.8,80.0 41.8,52.0" class="grid mid"/>
+    <polygon points="66.0,48.0 81.6,57.0 81.6,75.0 66.0,84.0 50.4,75.0 50.4,57.0" class="grid inner"/>
+    <line x1="66" y1="66" x2="66.0" y2="29.0" class="axis"/><line x1="66" y1="66" x2="98.0" y2="47.5" class="axis"/><line x1="66" y1="66" x2="98.0" y2="84.5" class="axis"/><line x1="66" y1="66" x2="66.0" y2="103.0" class="axis"/><line x1="66" y1="66" x2="34.0" y2="84.5" class="axis"/><line x1="66" y1="66" x2="34.0" y2="47.5" class="axis"/>
+    <polygon points="66.0,44.7 77.1,59.6 97.7,84.3 66.0,83.6 53.4,73.3 41.1,51.6" class="shape"/>
+    <circle cx="66" cy="66" r="1.8" fill="#f4c431" opacity="0.78"/>
+    <text x="66.0" y="16.0" class="label">凶狠</text><text x="111.0" y="42.0" class="label">优雅</text><text x="111.0" y="94.0" class="label">控场</text><text x="66.0" y="120.0" class="label">爆点</text><text x="21.0" y="94.0" class="label">终结</text><text x="21.0" y="42.0" class="label">抽象</text>
+  </g>
+  <style>
+    .grid { fill: rgba(255,255,255,0.030); stroke: rgba(255,255,255,0.24); stroke-width: 0.8; }
+    .mid { fill: none; stroke: rgba(255,255,255,0.15); }
+    .inner { fill: none; stroke: rgba(255,255,255,0.10); }
+    .axis { stroke: rgba(255,255,255,0.14); stroke-width: 0.65; }
+    .shape { fill: url(#goldFill); stroke: #f4c431; stroke-width: 1.8; stroke-linejoin: round; }
+    .label { fill: #fffdf4; font: 900 8px -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; text-anchor: middle; dominant-baseline: middle; paint-order: stroke; stroke: rgba(0,0,0,0.48); stroke-width: 1.8px; }
+  </style>
+</svg>

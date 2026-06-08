@@ -3,9 +3,12 @@ const PUBLIC_ROUTE = window.location.pathname.startsWith("/soccercard") ? "/socc
 const ASSET_BASE = PUBLIC_ROUTE
   ? `${PUBLIC_ROUTE}assets/generated/player-archetypes-v1/`
   : "../../assets/generated/player-archetypes-v1/";
+const RADAR_BASE = PUBLIC_ROUTE
+  ? `${PUBLIC_ROUTE}assets/generated/player-radars-v1/`
+  : "../../assets/generated/player-radars-v1/";
 const QR_IMAGE_SRC = "./product-qr.png";
 const PRODUCT_URL = "https://de1zyeu.tech/soccercard/";
-const ASSET_VERSION = "20260607-review-v1";
+const ASSET_VERSION = "20260608-radar-v1";
 const ASSET_VERSION_SUFFIX = window.location.protocol === "file:" ? "" : `?v=${ASSET_VERSION}`;
 
 const state = {
@@ -135,6 +138,7 @@ function parsePlayers(markdown) {
         id,
         file,
         image: ASSET_BASE + file,
+        radar: getRadarSrc({ file }),
         role,
         summary,
         position,
@@ -159,6 +163,11 @@ function applyPlayerOverride(player) {
     ...player,
     ...(playerOverrides[player.id] || {}),
   };
+}
+
+function getRadarSrc(player) {
+  const file = player.radar || `${player.file.split("/").pop().replace(/\.[^.]+$/u, "")}_radar.svg`;
+  return RADAR_BASE + file + ASSET_VERSION_SUFFIX;
 }
 
 function splitTags(value) {
@@ -758,7 +767,7 @@ function renderResult(result) {
   setReadingPanelOpen(false);
 
   $("#top-score").textContent = `综合能力值 ${profile.overall}`;
-  renderRadar(profile.scores);
+  renderRadar(profile.scores, player);
   updateResultActionsForMode();
 
   updateSavedBox();
@@ -866,7 +875,34 @@ function getPositionFit(position) {
   return "在球场上找到最适合自己的位置，把优势踢得很明显";
 }
 
-function renderRadar(scores) {
+function renderRadar(scores, player) {
+  const image = $("#radar-image");
+  const fallback = $("#radar-chart");
+  if (image && fallback && player?.radar) {
+    image.alt = `${getDisplayRole(player)} 六维能力图`;
+    image.hidden = false;
+    fallback.hidden = true;
+    image.onerror = () => {
+      image.hidden = true;
+      fallback.hidden = false;
+      renderDynamicRadar(scores);
+    };
+    image.onload = () => {
+      image.hidden = false;
+      fallback.hidden = true;
+    };
+    image.src = player.radar;
+    if (image.complete && image.naturalWidth > 0) {
+      image.hidden = false;
+      fallback.hidden = true;
+    }
+    return;
+  }
+
+  renderDynamicRadar(scores);
+}
+
+function renderDynamicRadar(scores) {
   const center = 82;
   const outer = 48;
   const inner = 24;
@@ -1028,10 +1064,14 @@ function bindGalleryEvents() {
 }
 
 function attachImagePaths(players) {
-  return players.map((player) => ({
-    ...applyPlayerOverride(player),
-    image: ASSET_BASE + player.file + ASSET_VERSION_SUFFIX,
-  }));
+  return players.map((player) => {
+    const merged = applyPlayerOverride(player);
+    return {
+      ...merged,
+      image: ASSET_BASE + merged.file + ASSET_VERSION_SUFFIX,
+      radar: getRadarSrc(merged),
+    };
+  });
 }
 
 async function loadPlayers() {
