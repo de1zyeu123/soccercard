@@ -10,9 +10,14 @@ const RADAR_BASE = PUBLIC_ROUTE
   ? `${PUBLIC_ROUTE}assets/others/player-radars-v1/`
   : "../../assets/others/player-radars-v1/";
 const QR_IMAGE_SRC = "./product-qr.png";
+const QR_SERVICE_BASE = "https://quickchart.io/qr";
 const PRODUCT_URL = "https://de1zyeu.tech/soccercard/";
-const ASSET_VERSION = "20260612-latest-assets-v1";
+const ASSET_VERSION = "20260612-preload-track-v3";
 const ASSET_VERSION_SUFFIX = window.location.protocol === "file:" ? "" : `?v=${ASSET_VERSION}`;
+const TRACKING_ENDPOINT = PUBLIC_ROUTE ? `${PUBLIC_ROUTE}api/track` : "";
+const TRACKING_VERSION = "20260612-track-v1";
+const LOADING_MIN_MS = 3000;
+const LOADING_MAX_MS = 5000;
 
 function normalizeAssetBase(base) {
   return base.endsWith("/") ? base : `${base}/`;
@@ -27,7 +32,20 @@ const state = {
   galleryDetailIndex: -1,
   sharePosterBlob: null,
   sharePosterUrl: "",
+  shareMeta: null,
   birthdateDraft: { year: 1998, month: 7, day: 10 },
+  loadingRunId: 0,
+};
+
+const trackingState = {
+  initialized: false,
+  visitorId: "",
+  sessionId: "",
+  screen: "",
+  startedAt: Date.now(),
+  source: {},
+  fieldSeen: new Set(),
+  formStarted: false,
 };
 
 const scoreLabels = [
@@ -129,6 +147,7 @@ function showScreen(name) {
   document.querySelectorAll(".screen").forEach((screen) => {
     screen.classList.toggle("active", screen.dataset.screen === name);
   });
+  trackScreenView(name);
 }
 
 function isLibraryMode() {
@@ -201,6 +220,146 @@ function hashText(value) {
     hash = Math.imul(hash, 16777619);
   }
   return hash >>> 0;
+}
+
+function wait(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function safeStorageGet(storage, key) {
+  if (!storage) return "";
+  try {
+    return storage.getItem(key);
+  } catch {
+    return "";
+  }
+}
+
+function safeStorageSet(storage, key, value) {
+  if (!storage) return;
+  try {
+    storage.setItem(key, value);
+  } catch {
+    // Storage can be unavailable in strict privacy modes.
+  }
+}
+
+function getBrowserStorage(name) {
+  try {
+    return window[name];
+  } catch {
+    return null;
+  }
+}
+
+function createClientId(prefix) {
+  if (window.crypto?.randomUUID) return `${prefix}_${window.crypto.randomUUID()}`;
+  return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function getOrCreateId(storage, key, prefix) {
+  const existing = safeStorageGet(storage, key);
+  if (existing) return existing;
+  const next = createClientId(prefix);
+  safeStorageSet(storage, key, next);
+  return next;
+}
+
+function getSourceContext() {
+  const params = new URLSearchParams(window.location.search);
+  const pick = (key) => params.get(key) || "";
+  return {
+    referrer: document.referrer || "",
+    landingPath: window.location.pathname,
+    utmSource: pick("utm_source"),
+    utmMedium: pick("utm_medium"),
+    utmCampaign: pick("utm_campaign"),
+    utmContent: pick("utm_content"),
+    utmTerm: pick("utm_term"),
+    parentShareId: pick("share_id"),
+    entryCardId: pick("card"),
+  };
+}
+
+function initTracking() {
+  if (trackingState.initialized) return;
+  trackingState.initialized = true;
+  trackingState.startedAt = Date.now();
+  trackingState.visitorId = getOrCreateId(getBrowserStorage("localStorage"), "soccercardVisitorId", "visitor");
+  trackingState.sessionId = getOrCreateId(getBrowserStorage("sessionStorage"), "soccercardSessionId", "session");
+  trackingState.source = getSourceContext();
+  window.addEventListener("pagehide", () => {
+    trackEvent("exit", {
+      screen: trackingState.screen,
+      durationMs: Date.now() - trackingState.startedAt,
+    }, { immediate: true });
+  });
+}
+
+function sanitizeTrackingDetails(details) {
+  return Object.fromEntries(
+    Object.entries(details || {})
+      .filter(([, value]) => value !== undefined && value !== null && value !== "")
+      .map(([key, value]) => {
+        if (typeof value === "string") return [key, value.slice(0, 500)];
+        if (typeof value === "number" || typeof value === "boolean") return [key, value];
+        if (Array.isArray(value)) return [key, value.slice(0, 12)];
+        return [key, value];
+      }),
+  );
+}
+
+function trackEvent(name, details = {}, options = {}) {
+  initTracking();
+  if (!TRACKING_ENDPOINT) return;
+  const payload = {
+    event: name,
+    version: TRACKING_VERSION,
+    visitorId: trackingState.visitorId,
+    sessionId: trackingState.sessionId,
+    source: trackingState.source,
+    page: {
+      path: window.location.pathname,
+      title: document.title,
+    },
+    screen: trackingState.screen,
+    details: sanitizeTrackingDetails(details),
+    clientTs: new Date().toISOString(),
+  };
+  const body = JSON.stringify(payload);
+  if (navigator.sendBeacon && (options.immediate || document.visibilityState === "hidden")) {
+    navigator.sendBeacon(TRACKING_ENDPOINT, new Blob([body], { type: "application/json" }));
+    return;
+  }
+  fetch(TRACKING_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+    keepalive: Boolean(options.immediate),
+  }).catch(() => {
+    // Tracking must never block the product flow.
+  });
+}
+
+function trackScreenView(name) {
+  if (trackingState.screen === name) return;
+  trackingState.screen = name;
+  trackEvent("screen_view", { screen: name });
+  if (name === "loading") trackEvent("loading_view");
+  if (name === "gallery") trackEvent("gallery_open", { page: state.galleryPage + 1 });
+}
+
+function getResultTrackingDetails(result, details = {}) {
+  if (!result?.player) return details;
+  return {
+    ...details,
+    cardId: result.player.id,
+    role: getDisplayRole(result.player),
+    position: result.player.position,
+    style: result.input?.selfStyle || "",
+  };
 }
 
 function clamp(value, min = 0, max = 100) {
@@ -1025,7 +1184,7 @@ function renderGalleryControls() {
   $("#gallery-next").disabled = state.galleryPage >= totalPages - 1;
 }
 
-function showGalleryPlayerAt(index) {
+function showGalleryPlayerAt(index, source = "gallery") {
   if (index < 0 || index >= state.players.length) return;
   state.galleryDetailIndex = index;
   state.galleryPage = Math.floor(index / state.galleryPageSize);
@@ -1036,6 +1195,10 @@ function showGalleryPlayerAt(index) {
   const result = { input, profile, player };
   renderResult(result);
   showScreen("result");
+  trackEvent("gallery_card_open", getResultTrackingDetails(result, {
+    source,
+    galleryPage: state.galleryPage + 1,
+  }));
 }
 
 function selectGalleryPlayer(target) {
@@ -1043,7 +1206,7 @@ function selectGalleryPlayer(target) {
   if (!item) return;
   const index = state.players.findIndex((entry) => entry.id === Number(item.dataset.id));
   if (index < 0) return;
-  showGalleryPlayerAt(index);
+  showGalleryPlayerAt(index, "grid");
 }
 
 function returnToLibraryGallery() {
@@ -1052,11 +1215,12 @@ function returnToLibraryGallery() {
   }
   renderGallery();
   showScreen("gallery");
+  trackEvent("library_back", { galleryPage: state.galleryPage + 1 });
 }
 
 function showAdjacentGalleryPlayer(delta) {
   const baseIndex = state.galleryDetailIndex < 0 ? 0 : state.galleryDetailIndex;
-  showGalleryPlayerAt(Math.max(0, Math.min(state.players.length - 1, baseIndex + delta)));
+  showGalleryPlayerAt(Math.max(0, Math.min(state.players.length - 1, baseIndex + delta)), delta > 0 ? "next" : "prev");
 }
 
 function bindGalleryEvents() {
@@ -1073,12 +1237,14 @@ function bindGalleryEvents() {
   $("#gallery-prev").addEventListener("click", () => {
     state.galleryPage = Math.max(0, state.galleryPage - 1);
     renderGallery();
+    trackEvent("gallery_page", { page: state.galleryPage + 1, direction: "prev" });
   });
 
   $("#gallery-next").addEventListener("click", () => {
     const totalPages = Math.ceil(state.players.length / state.galleryPageSize);
     state.galleryPage = Math.min(totalPages - 1, state.galleryPage + 1);
     renderGallery();
+    trackEvent("gallery_page", { page: state.galleryPage + 1, direction: "next" });
   });
 
   $("#library-prev-card").addEventListener("click", () => showAdjacentGalleryPlayer(-1));
@@ -1111,13 +1277,64 @@ function loadImage(src) {
   return new Promise((resolve, reject) => {
     const image = new Image();
     const url = new URL(src, window.location.href);
-    if (url.origin === window.location.origin && url.protocol !== "file:") {
+    if (url.protocol !== "file:") {
       image.crossOrigin = "anonymous";
     }
-    image.onload = () => resolve(image);
+    image.onload = async () => {
+      try {
+        if (image.decode) await image.decode();
+      } catch {
+        // The image is already loaded; decode failures should not block display.
+      }
+      resolve(image);
+    };
     image.onerror = reject;
     image.src = url.href;
   });
+}
+
+async function preloadResultAssets(result) {
+  const assets = [
+    ["result_image", result.player.image],
+    ["result_radar", result.player.radar],
+  ].filter(([, src]) => Boolean(src));
+
+  window.lastSoccercardPreload = {
+    startedAt: new Date().toISOString(),
+    cardId: result.player.id,
+    role: getDisplayRole(result.player),
+    assetCount: assets.length,
+  };
+
+  return Promise.all(assets.map(async ([type, src]) => {
+    const startedAt = performance.now();
+    try {
+      await loadImage(src);
+      const durationMs = Math.round(performance.now() - startedAt);
+      if (type === "result_image") {
+        trackEvent("result_image_loaded", getResultTrackingDetails(result, { durationMs, phase: "loading" }));
+      }
+      return { type, ok: true, durationMs };
+    } catch (error) {
+      const durationMs = Math.round(performance.now() - startedAt);
+      trackEvent("result_asset_load_failed", getResultTrackingDetails(result, {
+        type,
+        durationMs,
+        error: error?.message || "image_load_failed",
+      }));
+      return { type, ok: false, durationMs };
+    }
+  }));
+}
+
+async function waitForLoadingGate(preloadPromise, startedAt) {
+  await wait(LOADING_MIN_MS);
+  const elapsed = performance.now() - startedAt;
+  const remaining = Math.max(0, LOADING_MAX_MS - elapsed);
+  return Promise.race([
+    preloadPromise.then((assets) => ({ status: "ready", assets })),
+    wait(remaining).then(() => ({ status: "timeout", assets: [] })),
+  ]);
 }
 
 function drawCoverImage(ctx, image, x, y, width, height) {
@@ -1248,12 +1465,27 @@ function drawCanvasChip(ctx, label, x, y) {
   return x + width + 14;
 }
 
-async function buildSharePosterBlob() {
+function buildShareUrl(shareId, cardId) {
+  const url = new URL(PRODUCT_URL);
+  if (shareId) url.searchParams.set("share_id", shareId);
+  if (cardId) url.searchParams.set("card", String(cardId));
+  return url.toString();
+}
+
+function getQrImageSrc(shareUrl) {
+  const url = new URL(QR_SERVICE_BASE);
+  url.searchParams.set("size", "220");
+  url.searchParams.set("margin", "1");
+  url.searchParams.set("text", shareUrl);
+  return url.toString();
+}
+
+async function buildSharePosterBlob(shareMeta = {}) {
   const { input, profile, player } = state.currentResult;
   const displayRole = getDisplayRole(player);
   const [playerImage, qrImage] = await Promise.all([
     loadImage(player.image),
-    loadImage(QR_IMAGE_SRC),
+    loadImage(getQrImageSrc(shareMeta.shareUrl || PRODUCT_URL)).catch(() => loadImage(QR_IMAGE_SRC)),
   ]);
   const canvas = document.createElement("canvas");
   canvas.width = 1080;
@@ -1363,20 +1595,30 @@ function revokeSharePosterUrl() {
 
 async function openSharePoster() {
   if (!state.currentResult) return;
-  const blob = await buildSharePosterBlob();
+  const shareId = createClientId("share");
+  const shareUrl = buildShareUrl(shareId, state.currentResult.player.id);
+  const shareMeta = { shareId, shareUrl };
+  const blob = await buildSharePosterBlob(shareMeta);
   revokeSharePosterUrl();
   state.sharePosterBlob = blob;
   state.sharePosterUrl = URL.createObjectURL(blob);
+  state.shareMeta = shareMeta;
   $("#share-poster").src = state.sharePosterUrl;
   $("#share-sheet").classList.add("open");
   $("#share-sheet").classList.remove("clean");
   $("#share-sheet").setAttribute("aria-hidden", "false");
   window.lastShareCardExport = {
     role: getDisplayRole(state.currentResult.player),
+    shareId,
     size: blob.size,
-    url: PRODUCT_URL,
+    url: shareUrl,
     at: new Date().toISOString(),
   };
+  trackEvent("poster_generated", getResultTrackingDetails(state.currentResult, {
+    shareId,
+    shareUrl,
+    posterBytes: blob.size,
+  }));
 }
 
 function closeSharePoster() {
@@ -1396,11 +1638,18 @@ function downloadPosterBlob() {
   link.click();
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+  trackEvent("poster_download", getResultTrackingDetails(state.currentResult, {
+    shareId: state.shareMeta?.shareId || "",
+    posterBytes: state.sharePosterBlob.size,
+  }));
 }
 
 async function downloadShareCard() {
   if (!state.sharePosterBlob) {
-    state.sharePosterBlob = await buildSharePosterBlob();
+    const shareId = createClientId("share");
+    const shareUrl = buildShareUrl(shareId, state.currentResult?.player?.id);
+    state.shareMeta = { shareId, shareUrl };
+    state.sharePosterBlob = await buildSharePosterBlob(state.shareMeta);
   }
   downloadPosterBlob();
 }
@@ -1418,6 +1667,8 @@ function updateSavedBox() {
 }
 
 async function init() {
+  initTracking();
+  trackEvent("page_view", { entry: isLibraryMode() ? "library" : "form" });
   state.players = await loadPlayers();
   renderGallery();
   bindGalleryEvents();
@@ -1431,6 +1682,7 @@ async function init() {
     const screen = $(".screen-result");
     const scrollTop = screen?.scrollTop || 0;
     setReadingPanelOpen(!panel?.classList.contains("open"));
+    trackEvent(panel?.classList.contains("open") ? "reading_expand" : "reading_collapse", getResultTrackingDetails(state.currentResult || {}));
     button.blur();
     requestAnimationFrame(() => {
       if (screen) screen.scrollTop = scrollTop;
@@ -1450,26 +1702,68 @@ async function init() {
     document.querySelectorAll("#style-grid button").forEach((entry) => {
       entry.classList.toggle("selected", entry === button);
     });
+    trackEvent("field_interaction", { field: "selfStyle", value: state.selectedStyle });
   });
 
-  $("#birth-form").addEventListener("submit", (event) => {
+  $("#birth-form").addEventListener("input", (event) => {
+    if (!trackingState.formStarted) {
+      trackingState.formStarted = true;
+      trackEvent("form_start");
+    }
+    const field = event.target?.id || event.target?.name;
+    if (!field || trackingState.fieldSeen.has(field)) return;
+    trackingState.fieldSeen.add(field);
+    trackEvent("field_interaction", { field });
+  });
+
+  $("#birth-form").addEventListener("change", (event) => {
+    const field = event.target?.id || event.target?.name;
+    if (!field || trackingState.fieldSeen.has(field)) return;
+    trackingState.fieldSeen.add(field);
+    trackEvent("field_interaction", { field });
+  });
+
+  $("#birth-form").addEventListener("submit", async (event) => {
     event.preventDefault();
-    showScreen("loading");
     const input = getFormData();
     const result = buildResult(input);
-    setTimeout(() => {
-      renderResult(result);
-      showScreen("result");
-    }, 3000);
+    const loadingRunId = Date.now();
+    state.loadingRunId = loadingRunId;
+    const startedAt = performance.now();
+    trackEvent("generate_click", getResultTrackingDetails(result));
+    showScreen("loading");
+    const preloadPromise = preloadResultAssets(result);
+    const gate = await waitForLoadingGate(preloadPromise, startedAt);
+    if (state.loadingRunId !== loadingRunId) return;
+    window.lastSoccercardLoadGate = {
+      status: gate.status,
+      loadingMs: Math.round(performance.now() - startedAt),
+      assets: gate.assets,
+      cardId: result.player.id,
+    };
+    renderResult(result);
+    showScreen("result");
+    trackEvent("result_view", getResultTrackingDetails(result, {
+      loadGate: gate.status,
+      loadingMs: Math.round(performance.now() - startedAt),
+      assetsReady: gate.assets.filter((asset) => asset.ok).map((asset) => asset.type),
+      assetsFailed: gate.assets.filter((asset) => !asset.ok).map((asset) => asset.type),
+    }));
   });
 
-  $("#regen").addEventListener("click", () => showScreen("form"));
+  $("#regen").addEventListener("click", () => {
+    trackEvent("regen_click", getResultTrackingDetails(state.currentResult || {}));
+    showScreen("form");
+  });
   $("#open-gallery")?.addEventListener("click", () => showScreen("gallery"));
   $("#close-gallery").addEventListener("click", () => {
     if (isLibraryMode()) return;
     showScreen(state.currentResult ? "result" : "form");
   });
-  $("#share-close").addEventListener("click", closeSharePoster);
+  $("#share-close").addEventListener("click", () => {
+    trackEvent("share_close", getResultTrackingDetails(state.currentResult || {}));
+    closeSharePoster();
+  });
   $("#share-clean-mode").addEventListener("click", () => {
     $("#share-sheet").classList.add("clean");
   });
@@ -1510,6 +1804,7 @@ async function init() {
     };
     localStorage.setItem("footballBirthrightResult", JSON.stringify(saved));
     updateSavedBox();
+    trackEvent("share_click", getResultTrackingDetails(state.currentResult));
     const button = $("#save-result");
     button.textContent = "生成中";
     button.disabled = true;
