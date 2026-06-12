@@ -10,17 +10,27 @@ const RADAR_BASE = PUBLIC_ROUTE
   ? `${PUBLIC_ROUTE}assets/others/player-radars-v1/`
   : "../../assets/others/player-radars-v1/";
 const QR_IMAGE_SRC = "./product-qr.png";
-const QR_SERVICE_BASE = "https://quickchart.io/qr";
 const PRODUCT_URL = "https://de1zyeu.tech/soccercard/";
-const ASSET_VERSION = "20260612-preload-track-v3";
+const ASSET_VERSION = "20260612-preload-track-v4";
 const ASSET_VERSION_SUFFIX = window.location.protocol === "file:" ? "" : `?v=${ASSET_VERSION}`;
 const TRACKING_ENDPOINT = PUBLIC_ROUTE ? `${PUBLIC_ROUTE}api/track` : "";
 const TRACKING_VERSION = "20260612-track-v1";
 const LOADING_MIN_MS = 3000;
 const LOADING_MAX_MS = 5000;
+const IMAGE_LOAD_TIMEOUT_MS = 8000;
 
 function normalizeAssetBase(base) {
   return base.endsWith("/") ? base : `${base}/`;
+}
+
+function setImageSource(image, src) {
+  const url = new URL(src, window.location.href);
+  if (url.protocol !== "file:") {
+    image.crossOrigin = "anonymous";
+  } else {
+    image.removeAttribute("crossorigin");
+  }
+  image.src = url.href;
 }
 
 const state = {
@@ -932,8 +942,9 @@ function renderResult(result) {
   const explanationProfile = result.matchProfile || profile;
   state.currentResult = result;
 
-  $("#result-image").src = player.image;
-  $("#result-image").alt = getDisplayRole(player);
+  const resultImage = $("#result-image");
+  setImageSource(resultImage, player.image);
+  resultImage.alt = getDisplayRole(player);
   const nicknameLabel = getDisplayNickname(input);
   $("#result-id").textContent = nicknameLabel;
   $("#result-id").hidden = !nicknameLabel;
@@ -1073,7 +1084,7 @@ function renderRadar(scores, player) {
       image.hidden = false;
       fallback.hidden = true;
     };
-    image.src = player.radar;
+    setImageSource(image, player.radar);
     if (image.complete && image.naturalWidth > 0) {
       image.hidden = false;
       fallback.hidden = true;
@@ -1273,12 +1284,18 @@ async function loadPlayers() {
   return parsePlayers(markdown);
 }
 
-function loadImage(src) {
+function loadImage(src, timeoutMs = IMAGE_LOAD_TIMEOUT_MS) {
   return new Promise((resolve, reject) => {
     const image = new Image();
-    const url = new URL(src, window.location.href);
-    if (url.protocol !== "file:") {
-      image.crossOrigin = "anonymous";
+    let settled = false;
+    const timer = timeoutMs > 0
+      ? setTimeout(() => finish(() => reject(new Error("image_load_timeout"))), timeoutMs)
+      : null;
+    function finish(callback) {
+      if (settled) return;
+      settled = true;
+      if (timer) clearTimeout(timer);
+      callback();
     }
     image.onload = async () => {
       try {
@@ -1286,10 +1303,10 @@ function loadImage(src) {
       } catch {
         // The image is already loaded; decode failures should not block display.
       }
-      resolve(image);
+      finish(() => resolve(image));
     };
-    image.onerror = reject;
-    image.src = url.href;
+    image.onerror = () => finish(() => reject(new Error("image_load_failed")));
+    setImageSource(image, src);
   });
 }
 
@@ -1472,20 +1489,12 @@ function buildShareUrl(shareId, cardId) {
   return url.toString();
 }
 
-function getQrImageSrc(shareUrl) {
-  const url = new URL(QR_SERVICE_BASE);
-  url.searchParams.set("size", "220");
-  url.searchParams.set("margin", "1");
-  url.searchParams.set("text", shareUrl);
-  return url.toString();
-}
-
 async function buildSharePosterBlob(shareMeta = {}) {
   const { input, profile, player } = state.currentResult;
   const displayRole = getDisplayRole(player);
   const [playerImage, qrImage] = await Promise.all([
     loadImage(player.image),
-    loadImage(getQrImageSrc(shareMeta.shareUrl || PRODUCT_URL)).catch(() => loadImage(QR_IMAGE_SRC)),
+    loadImage(QR_IMAGE_SRC),
   ]);
   const canvas = document.createElement("canvas");
   canvas.width = 1080;
