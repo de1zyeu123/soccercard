@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>命中球缘后台</title>
+    <link rel="stylesheet" href="./admin.css?v=20260612-admin-v1" />
+  </head>
+  <body>
+    <main class="admin-shell">
+      <header class="admin-header">
+        <div>
+          <p class="eyebrow">Soccercard Admin</p>
+          <h1>命中球缘后台</h1>
+        </div>
+        <div class="header-actions">
+          <span id="status-pill" class="status-pill">读取中</span>
+          <button id="refresh" type="button">刷新</button>
+        </div>
+      </header>
+
+      <section class="summary-grid" aria-label="核心指标">
+        <article>
+          <span>事件数</span>
+          <strong id="metric-events">-</strong>
+        </article>
+        <article>
+          <span>访客</span>
+          <strong id="metric-visitors">-</strong>
+        </article>
+        <article>
+          <span>会话</span>
+          <strong id="metric-sessions">-</strong>
+        </article>
+        <article>
+          <span>成图</span>
+          <strong id="metric-posters">-</strong>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>漏斗</h2>
+          <span id="last-updated">-</span>
+        </div>
+        <div id="funnel" class="funnel-list"></div>
+      </section>
+
+      <section class="dashboard-grid">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>用户兴趣</h2>
+            <span>Top Cards</span>
+          </div>
+          <div id="top-cards" class="rank-list"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>来源</h2>
+            <span>Referrer / UTM</span>
+          </div>
+          <div id="sources" class="rank-list"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>分享</h2>
+            <span>Share Flow</span>
+          </div>
+          <div id="share" class="share-grid"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>地区</h2>
+            <span>Vercel IP</span>
+          </div>
+          <div id="locations" class="rank-list"></div>
+        </section>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>最近事件</h2>
+          <span id="retention-note">-</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>时间</th>
+                <th>事件</th>
+                <th>卡片</th>
+                <th>页面</th>
+                <th>来源</th>
+              </tr>
+            </thead>
+            <tbody id="events"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="./admin.js?v=20260612-admin-v1"></script>
+  </body>
+</html>
