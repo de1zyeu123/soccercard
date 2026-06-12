@@ -11,7 +11,7 @@ const RADAR_BASE = PUBLIC_ROUTE
   : "../../assets/others/player-radars-v1/";
 const QR_IMAGE_SRC = "./product-qr.png";
 const PRODUCT_URL = "https://de1zyeu.tech/soccercard/";
-const ASSET_VERSION = "20260608-radar-v1";
+const ASSET_VERSION = "20260612-latest-assets-v1";
 const ASSET_VERSION_SUFFIX = window.location.protocol === "file:" ? "" : `?v=${ASSET_VERSION}`;
 
 function normalizeAssetBase(base) {
@@ -80,11 +80,22 @@ const playerOverrides = {
 };
 
 const roleCardIds = new Set([97, 98, 99, 100]);
-const featuredCardIds = new Set([
-  1, 2, 3, 6, 9, 10, 12, 14, 17, 18, 19, 25, 29, 39, 40,
-  44, 50, 51, 52, 58, 62, 65, 92, 93, 94, 95, 97, 98, 99, 100,
-]);
-const FEATURED_CARD_WEIGHT = 4;
+// 生成权重表：高概率卡 x5，次高概率卡 x3，其余 x1（key 为 players-data.js 中的 id）
+const CARD_WEIGHT_DEFAULT = 1;
+const cardWeights = {
+  1: 5, // 球场武僧 Pepe
+  2: 5, // 飞踹国王 Cantona
+  6: 5, // 思想家 Balotelli
+  19: 5, // 禁区魔人 Haaland
+  25: 5, // 电视机球王 Bellingham
+  29: 5, // 球形闪电 Ailton
+  40: 5, // 航母中卫 Maguire
+  44: 5, // 人形大炮 Roberto Carlos
+  50: 5, // 楚桩王 Lukaku
+  52: 5, // 汉堡球王 Hazard
+  9: 3, // Siuuu！ Cristiano
+  10: 3, // 球王 Messi
+};
 const MATCH_SCORE_BAND = 15;
 const SPECIAL_ROLE_CHANCE = 0.1;
 
@@ -667,8 +678,8 @@ function rollUnit(seed, salt) {
   return (hashText(`${seed}|${salt}`) % 100000) / 100000;
 }
 
-function isFeaturedPlayer(player) {
-  return player.priority === "high" || featuredCardIds.has(player.id);
+function getCardWeight(player) {
+  return cardWeights[player.id] || CARD_WEIGHT_DEFAULT;
 }
 
 function weightedPick(entries, seed, salt) {
@@ -717,6 +728,8 @@ function pickPlayer(profile, input = {}) {
     if (roleCardIds.has(player.id)) return false;
     if (profile.persona === "门线贵族") return player.position === "门将";
     if (profile.position === "边锋") return player.position.includes("边锋");
+    if (profile.position === "左边锋") return ["左边锋", "左后卫"].includes(player.position);
+    if (profile.position === "右边锋") return ["右边锋", "右后卫", "右中场"].includes(player.position);
     return player.position === profile.position;
   });
   const pool = preferred.length >= 4 ? preferred : state.players.filter((player) => !roleCardIds.has(player.id));
@@ -735,10 +748,13 @@ function pickPlayer(profile, input = {}) {
     .sort((a, b) => b.score - a.score);
 
   const topScore = ranked[0].score;
-  const topBand = ranked.filter((entry) => entry.score >= topScore - MATCH_SCORE_BAND);
+  // 高权重卡只要进入候选池就保留在抽取带内，保证权重生效
+  const topBand = ranked.filter(
+    (entry) => entry.score >= topScore - MATCH_SCORE_BAND || getCardWeight(entry.player) > CARD_WEIGHT_DEFAULT,
+  );
   const weightedTopBand = topBand.map((entry) => {
     const closeness = Math.max(0.35, 1 - (topScore - entry.score) / (MATCH_SCORE_BAND + 1));
-    const priorityWeight = isFeaturedPlayer(entry.player) ? FEATURED_CARD_WEIGHT : 1;
+    const priorityWeight = getCardWeight(entry.player);
     return { player: entry.player, weight: closeness * priorityWeight };
   });
 
