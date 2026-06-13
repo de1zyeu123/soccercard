@@ -9,6 +9,7 @@ dist/
 .env.*
 
 # Large local-only Soccercard card assets
+assets/card/player-archetypes-v1
 assets/card/player-archetypes-v1/
 assets/card/*.zip
 
