@@ -18,6 +18,10 @@
   ],
   "rewrites": [
     {
+      "source": "/soccercard/admin",
+      "destination": "/code/soccercard/admin.html"
+    },
+    {
       "source": "/soccercard/api/admin",
       "destination": "/api/track?admin=1"
     },
