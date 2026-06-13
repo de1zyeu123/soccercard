@@ -9,15 +9,21 @@ const ASSET_BASE = normalizeAssetBase(window.SOCCERCARD_CARD_IMAGE_BASE || CARD_
 const RADAR_BASE = PUBLIC_ROUTE
   ? `${PUBLIC_ROUTE}assets/others/player-radars-v1/`
   : "../../assets/others/player-radars-v1/";
+const BRAND_WATERMARK_BASE = PUBLIC_ROUTE
+  ? `${PUBLIC_ROUTE}assets/others/`
+  : "../../assets/others/";
 const QR_IMAGE_SRC = "./product-qr.png";
 const PRODUCT_URL = "https://de1zyeu.tech/soccercard/";
-const ASSET_VERSION = "20260612-preload-track-v4";
+const ASSET_VERSION = "20260613-text-watermark-v1";
 const ASSET_VERSION_SUFFIX = window.location.protocol === "file:" ? "" : `?v=${ASSET_VERSION}`;
+const BRAND_WATERMARK_SRC = `${BRAND_WATERMARK_BASE}brand-crystal-ball-watermark-white.png${ASSET_VERSION_SUFFIX}`;
 const TRACKING_ENDPOINT = PUBLIC_ROUTE ? `${PUBLIC_ROUTE}api/track` : "";
 const TRACKING_VERSION = "20260612-track-v1";
 const LOADING_MIN_MS = 3000;
 const LOADING_MAX_MS = 5000;
 const IMAGE_LOAD_TIMEOUT_MS = 8000;
+const BRAND_WATERMARK_POSTER_SIZE = 152;
+const BRAND_WATERMARK_POSTER_OPACITY = 0.24;
 
 function normalizeAssetBase(base) {
   return base.endsWith("/") ? base : `${base}/`;
@@ -31,6 +37,12 @@ function setImageSource(image, src) {
     image.removeAttribute("crossorigin");
   }
   image.src = url.href;
+}
+
+function setBrandWatermarkSource() {
+  const image = $("#result-brand-watermark");
+  if (!image) return;
+  setImageSource(image, BRAND_WATERMARK_SRC);
 }
 
 const state = {
@@ -158,6 +170,11 @@ function showScreen(name) {
     screen.classList.toggle("active", screen.dataset.screen === name);
   });
   trackScreenView(name);
+  if (name === "result") {
+    const sync = () => syncResultTextLayout();
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(sync);
+    else sync();
+  }
 }
 
 function isLibraryMode() {
@@ -950,7 +967,7 @@ function renderResult(result) {
   $("#result-id").hidden = !nicknameLabel;
   renderResultContrast(input, player);
   $("#result-role").textContent = getDisplayRole(player);
-  $("#result-summary").textContent = player.summary;
+  $("#result-summary").textContent = formatBalancedSummary(player.summary);
   const resultTags = getResultTags(player, profile);
   $("#result-position").textContent = resultTags[0] || "";
   $("#result-persona").textContent = resultTags[1] || "";
@@ -1157,7 +1174,68 @@ function formatGalleryRole(role) {
 }
 
 function getDisplayRole(player) {
-  return formatGalleryRole(player.role);
+  return normalizeInlineText(formatGalleryRole(player.role));
+}
+
+function normalizeInlineText(text) {
+  return String(text || "").replace(/\s*[\r\n]+\s*/gu, "").trim();
+}
+
+function countTextUnits(text) {
+  return Array.from(String(text || "").replace(/\s/gu, "")).length;
+}
+
+function findBalancedSplitIndex(text, minLineUnits = 3) {
+  const chars = Array.from(text);
+  if (chars.length < minLineUnits * 2) return -1;
+
+  let best = { index: -1, score: Number.POSITIVE_INFINITY };
+  for (let index = 1; index < chars.length; index += 1) {
+    const first = chars.slice(0, index).join("").trim();
+    const second = chars.slice(index).join("").trim();
+    const firstUnits = countTextUnits(first);
+    const secondUnits = countTextUnits(second);
+    if (firstUnits < minLineUnits || secondUnits < minLineUnits) continue;
+
+    const previousChar = chars[index - 1];
+    const nextChar = chars[index];
+    let score = Math.abs(firstUnits - secondUnits) * 24 + Math.abs(index - chars.length / 2) * 2;
+    if (/[\s，、,；;:：]/u.test(previousChar)) score -= 10;
+    if (/[\s，、,；;:：]/u.test(nextChar || "")) score += 12;
+    if (/[。！？!?]/u.test(previousChar)) score -= 4;
+    if (score < best.score) best = { index, score };
+  }
+
+  return best.index;
+}
+
+function formatBalancedSummary(text) {
+  const cleanText = normalizeInlineText(text);
+  if (countTextUnits(cleanText) < 11) return cleanText;
+  const splitIndex = findBalancedSplitIndex(cleanText);
+  if (splitIndex < 0) return cleanText;
+  const chars = Array.from(cleanText);
+  return [
+    chars.slice(0, splitIndex).join("").trim(),
+    chars.slice(splitIndex).join("").trim(),
+  ].join("\n");
+}
+
+function syncResultTextLayout() {
+  fitSingleLineText($("#result-role"), 33, 22);
+}
+
+function fitSingleLineText(element, maxFontSize, minFontSize) {
+  if (!element || !element.clientWidth) return;
+  element.style.fontSize = "";
+  element.style.whiteSpace = "nowrap";
+
+  let nextFontSize = Math.min(maxFontSize, Number.parseFloat(getComputedStyle(element).fontSize) || maxFontSize);
+  element.style.fontSize = `${nextFontSize}px`;
+  while (element.scrollWidth > element.clientWidth && nextFontSize > minFontSize) {
+    nextFontSize -= 1;
+    element.style.fontSize = `${nextFontSize}px`;
+  }
 }
 
 function renderResultContrast(input, player) {
@@ -1402,6 +1480,82 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 4) {
   return y;
 }
 
+function getCanvasWrappedLines(ctx, text, maxWidth, maxLines) {
+  const chars = Array.from(text);
+  const lines = [];
+  let line = "";
+
+  for (let index = 0; index < chars.length; index += 1) {
+    const char = chars[index];
+    const test = line + char;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      lines.push(line);
+      line = char;
+      if (lines.length >= maxLines) break;
+    } else {
+      line = test;
+    }
+  }
+
+  if (line && lines.length < maxLines) lines.push(line);
+  if (lines.length === maxLines && chars.join("").length > lines.join("").length) {
+    const lastIndex = lines.length - 1;
+    let nextLine = lines[lastIndex];
+    while (nextLine && ctx.measureText(`${nextLine}...`).width > maxWidth) {
+      nextLine = Array.from(nextLine).slice(0, -1).join("");
+    }
+    lines[lastIndex] = `${nextLine}...`;
+  }
+
+  return lines;
+}
+
+function getBalancedCanvasLines(ctx, text, maxWidth, maxLines = 2) {
+  const cleanText = normalizeInlineText(text);
+  if (!cleanText) return [];
+  if (maxLines !== 2 || ctx.measureText(cleanText).width <= maxWidth) return [cleanText];
+
+  const chars = Array.from(cleanText);
+  let best = { lines: null, score: Number.POSITIVE_INFINITY };
+  for (let index = 1; index < chars.length; index += 1) {
+    const first = chars.slice(0, index).join("").trim();
+    const second = chars.slice(index).join("").trim();
+    if (!first || !second) continue;
+    const firstWidth = ctx.measureText(first).width;
+    const secondWidth = ctx.measureText(second).width;
+    if (firstWidth > maxWidth || secondWidth > maxWidth) continue;
+
+    const previousChar = chars[index - 1];
+    const nextChar = chars[index];
+    let score = Math.abs(firstWidth - secondWidth) + Math.abs(countTextUnits(first) - countTextUnits(second)) * 22;
+    if (/[\s，、,；;:：]/u.test(previousChar)) score -= 12;
+    if (/[\s，、,；;:：]/u.test(nextChar || "")) score += 14;
+    if (score < best.score) best = { lines: [first, second], score };
+  }
+
+  return best.lines || getCanvasWrappedLines(ctx, cleanText, maxWidth, maxLines);
+}
+
+function drawBalancedText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 2) {
+  const lines = getBalancedCanvasLines(ctx, text, maxWidth, maxLines);
+  lines.forEach((line, index) => {
+    ctx.fillText(line, x, y + index * lineHeight);
+  });
+  return y + lines.length * lineHeight;
+}
+
+function drawSingleLineCanvasText(ctx, text, x, y, maxWidth, maxFontSize, minFontSize, lineHeight) {
+  const cleanText = normalizeInlineText(text);
+  let fontSize = maxFontSize;
+  while (fontSize > minFontSize) {
+    ctx.font = `900 ${fontSize}px PingFang SC, sans-serif`;
+    if (ctx.measureText(cleanText).width <= maxWidth) break;
+    fontSize -= 2;
+  }
+  ctx.fillText(cleanText, x, y);
+  return y + lineHeight;
+}
+
 function drawRadarCanvas(ctx, scores, x, y, radius) {
   const centerX = x;
   const centerY = y;
@@ -1482,6 +1636,26 @@ function drawCanvasChip(ctx, label, x, y) {
   return x + width + 14;
 }
 
+function drawBrandWatermark(ctx, image, options = {}) {
+  if (!image?.naturalWidth || !image?.naturalHeight) return;
+  const {
+    maxSize = BRAND_WATERMARK_POSTER_SIZE,
+    opacity = BRAND_WATERMARK_POSTER_OPACITY,
+    right = 58,
+    bottom = 430,
+  } = options;
+  const scale = Math.min(maxSize / image.naturalWidth, maxSize / image.naturalHeight);
+  const width = Math.round(image.naturalWidth * scale);
+  const height = Math.round(image.naturalHeight * scale);
+  const x = ctx.canvas.width - width - right;
+  const y = ctx.canvas.height - height - bottom;
+
+  ctx.save();
+  ctx.globalAlpha = opacity;
+  ctx.drawImage(image, x, y, width, height);
+  ctx.restore();
+}
+
 function buildShareUrl(shareId, cardId) {
   const url = new URL(PRODUCT_URL);
   if (shareId) url.searchParams.set("share_id", shareId);
@@ -1492,9 +1666,10 @@ function buildShareUrl(shareId, cardId) {
 async function buildSharePosterBlob(shareMeta = {}) {
   const { input, profile, player } = state.currentResult;
   const displayRole = getDisplayRole(player);
-  const [playerImage, qrImage] = await Promise.all([
+  const [playerImage, qrImage, brandWatermark] = await Promise.all([
     loadImage(player.image),
     loadImage(QR_IMAGE_SRC),
+    loadImage(BRAND_WATERMARK_SRC).catch(() => null),
   ]);
   const canvas = document.createElement("canvas");
   canvas.width = 1080;
@@ -1527,6 +1702,7 @@ async function buildSharePosterBlob(shareMeta = {}) {
   bottomGradient.addColorStop(1, "rgba(2, 6, 4, 0.96)");
   ctx.fillStyle = bottomGradient;
   ctx.fillRect(0, 740, canvas.width, canvas.height - 740);
+  drawBrandWatermark(ctx, brandWatermark);
 
   ctx.fillStyle = "#f4c431";
   ctx.font = "900 34px PingFang SC, sans-serif";
@@ -1551,10 +1727,9 @@ async function buildSharePosterBlob(shareMeta = {}) {
   ctx.fillStyle = "#fffdf4";
   const roleLength = Array.from(displayRole).length;
   const roleFontSize = Math.max(82, Math.min(112, Math.floor(760 / Math.max(roleLength, 5))));
-  ctx.font = `900 ${roleFontSize}px PingFang SC, sans-serif`;
-  const titleEndY = wrapText(ctx, displayRole, 118, 1198, 760, 118, 2);
+  const titleEndY = drawSingleLineCanvasText(ctx, displayRole, 118, 1198, 760, roleFontSize, 68, 118);
   ctx.font = "900 42px PingFang SC, sans-serif";
-  wrapText(ctx, player.summary, 120, titleEndY + 18, 760, 54, 2);
+  drawBalancedText(ctx, player.summary, 120, titleEndY + 18, 760, 54, 2);
 
   let tagX = 118;
   getResultTags(player, profile).filter(Boolean).slice(0, 3).forEach((tag) => {
@@ -1678,6 +1853,7 @@ function updateSavedBox() {
 async function init() {
   initTracking();
   trackEvent("page_view", { entry: isLibraryMode() ? "library" : "form" });
+  setBrandWatermarkSource();
   state.players = await loadPlayers();
   renderGallery();
   bindGalleryEvents();
