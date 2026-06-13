@@ -1,0 +1,53 @@
+{
+  "functions": {
+    "api/track.js": {
+      "maxDuration": 10
+    }
+  },
+  "redirects": [
+    {
+      "source": "/soccercard",
+      "destination": "/soccercard/",
+      "permanent": true
+    },
+    {
+      "source": "/soccercard/admin/",
+      "destination": "/soccercard/admin",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/soccercard/api/admin",
+      "destination": "/api/track?admin=1"
+    },
+    {
+      "source": "/soccercard/api/track",
+      "destination": "/api/track"
+    },
+    {
+      "source": "/soccercard/assets/:path*",
+      "destination": "/assets/:path*"
+    },
+    {
+      "source": "/soccercard/library",
+      "destination": "/code/soccercard/index.html"
+    },
+    {
+      "source": "/soccercard/library/",
+      "destination": "/code/soccercard/index.html"
+    },
+    {
+      "source": "/soccercard/library/:path*",
+      "destination": "/code/soccercard/:path*"
+    },
+    {
+      "source": "/soccercard/",
+      "destination": "/code/soccercard/index.html"
+    },
+    {
+      "source": "/soccercard/:path*",
+      "destination": "/code/soccercard/:path*"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+.DS_Store
+**/.DS_Store
+
+node_modules/
+dist/
+.vite/
+.env
+.env.*
+
+assets/card/
+generated-images/
+code/prototype/
+code/football-flow/
+requirements/
+*.zip

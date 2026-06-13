@@ -14,3 +14,4 @@ assets/card/*.zip
 
 # Local reference assets
 assets/others/reference/
+.vercel

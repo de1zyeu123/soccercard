@@ -37,6 +37,14 @@ Auto result:
 code/soccercard/index.html?auto=1
 ```
 
+## Deployment
+
+- Source project: this repository.
+- Live routes: `https://de1zyeu.tech/soccercard/` and `https://de1zyeu.tech/soccercard/library`.
+- Vercel entry: `vercel.json` serves `code/soccercard/` under `/soccercard/`.
+- Admin API: `api/track.js` serves `/soccercard/api/track` and `/soccercard/api/admin`.
+- Do not deploy Soccercard from `Project Mystery/preview/soccercard`.
+
 ## Asset Policy
 
 - Player-card PNGs live locally under `assets/card/player-archetypes-v1/`.
