@@ -207,10 +207,11 @@ function recordEvents(events) {
 
 function buildAdminSnapshot(req) {
   const url = getRequestUrl(req);
-  const hours = Math.max(1, Math.min(168, Number(url.searchParams.get("hours") || 24)));
-  const cutoff = Date.now() - hours * 60 * 60 * 1000;
+  const range = getAdminRange(url);
   const store = getStore();
-  const events = store.events.filter((event) => Date.parse(event.serverTs || "") >= cutoff);
+  const events = range.mode === "all"
+    ? store.events.slice()
+    : store.events.filter((event) => Date.parse(event.serverTs || "") >= range.cutoff);
   const sessions = uniqueCount(events, "sessionId");
   const visitors = uniqueCount(events, "visitorId");
   const funnel = buildFunnel(events);
@@ -228,8 +229,11 @@ function buildAdminSnapshot(req) {
       lastEventAt: events[events.length - 1]?.serverTs || "",
     },
     retention: {
-      hours,
+      mode: range.mode,
+      hours: range.hours,
+      label: range.label,
       storedEvents: store.events.length,
+      visibleEvents: events.length,
       maxEvents: MAX_STORED_EVENTS,
       createdAt: store.createdAt,
       updatedAt: store.updatedAt,
@@ -239,7 +243,28 @@ function buildAdminSnapshot(req) {
     sources: rankSources(events),
     locations: rankLocations(events),
     share,
-    recentEvents: events.slice(-40).reverse(),
+    recentEvents: events.slice().reverse(),
+  };
+}
+
+function getAdminRange(url) {
+  const rawRange = String(url.searchParams.get("range") || url.searchParams.get("hours") || "all")
+    .trim()
+    .toLowerCase();
+  if (!rawRange || ["all", "history", "historical", "0"].includes(rawRange)) {
+    return {
+      mode: "all",
+      hours: null,
+      cutoff: 0,
+      label: "全部历史",
+    };
+  }
+  const hours = Math.max(1, Math.min(8760, Number(rawRange) || 24));
+  return {
+    mode: "hours",
+    hours,
+    cutoff: Date.now() - hours * 60 * 60 * 1000,
+    label: `最近 ${hours} 小时`,
   };
 }
 

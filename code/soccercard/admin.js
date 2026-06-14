@@ -101,7 +101,7 @@ function render(data) {
   $("#metric-sessions").textContent = formatNumber(data.summary?.sessions);
   $("#metric-posters").textContent = formatNumber(data.share?.posters);
   $("#last-updated").textContent = `更新 ${formatTime(data.generatedAt)}`;
-  $("#retention-note").textContent = `${formatNumber(data.retention?.storedEvents)} / ${formatNumber(data.retention?.maxEvents)} 条内存事件`;
+  $("#retention-note").textContent = `${data.retention?.label || "全部历史"} · ${formatNumber(data.retention?.visibleEvents)} / ${formatNumber(data.retention?.storedEvents)} 条已存事件`;
 
   renderFunnel(data.funnel);
   renderRankList("#top-cards", data.topCards, "暂无卡片数据");
